@@ -1,7 +1,18 @@
 #ifndef DMUS2MID_H
 #define DMUS2MID_H
 
-#define MUS_HEADER_MAGIC "MUS\x1A"
+#define MUS_HEADER_MAGIC  "MUS\x1A"
+
+#define MIDI_HEADER_MAGIC "MThd\x00\x00\x00\x06"
+#define MIDI_HEADER_DATA  "\x00\x00\x00\x01"
+#define MIDI_KEYSIG_MAGIC "\x00\xFF\x59\x02\x00\x00"
+#define MIDI_TEMPO_MAGIC  "\x00\0xFF\x51\x03\x0F\x42\x40"
+
+#define MUS_SYSTEM_MIN    10
+#define MUS_SYSTEM_MAX    15
+
+#define MIDI_MAX_VARLEN   4
+#define MIDI_MAX_CHANS    16
 
 enum MUS {
   MUS_NOTE_OFF      = 0x00,
