@@ -14,6 +14,8 @@
 #define MIDI_MAX_VARLEN   4
 #define MIDI_MAX_CHANS    16
 
+#define BUFFER_SIZE       65536
+
 enum MUS {
   MUS_NOTE_OFF      = 0x00,
   MUS_NOTE_ON       = 0x01,
@@ -31,6 +33,6 @@ enum MIDI {
   MIDI_INSTR_CHNG   = 0xC0,
   MIDI_END_TRACK    = 0x2F,
   MIDI_META         = 0xFF
-}
+};
 
 #endif
