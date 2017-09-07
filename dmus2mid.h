@@ -17,6 +17,10 @@
 
 #define BUFFER_SIZE       65536
 
+unsigned char mus_msb_set(unsigned char);
+unsigned char mus_event_type(unsigned char);
+unsigned char mus_event_chan(unsigned char);
+
 enum MUS {
   MUS_NOTE_OFF      = 0x00,
   MUS_NOTE_ON       = 0x01,

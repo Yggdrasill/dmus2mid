@@ -9,6 +9,21 @@
 
 #include "dmus2mid.h"
 
+inline unsigned char mus_msb_set(unsigned char byte)
+{
+  return byte >> 7;
+}
+
+inline unsigned char mus_event_type(unsigned char byte)
+{
+  return byte >> 4 & 0x7;
+}
+
+inline unsigned char mus_event_chan(unsigned char byte)
+{
+  return byte & 0xF;
+}
+
 int main(int argc, char **argv)
 {
   struct stat st;
@@ -60,9 +75,9 @@ int main(int argc, char **argv)
 
   for(uint16_t i = mus_off; i < mus_len + mus_off; i++) {
     byte = buffer[i];
-    delay = byte & 0x80;
-    event = byte >> 4 & 0x7;
-    channel = byte & 0xF;
+    delay = mus_msb_set(byte);
+    event = mus_event_type(byte);
+    channel = mus_event_chan(byte);
     cur_delay = 0;
     total_delay = 0;
 
@@ -71,7 +86,7 @@ int main(int argc, char **argv)
 
     if(event != MUS_NOTE_ON && event != MUS_CTRL_EVENT) {
       args[1] = 0xFF;
-    } else if(event == MUS_NOTE_ON && args[0] & 0x80) {
+    } else if(event == MUS_NOTE_ON && mus_msb_set(args[0]) ) {
       args[1] = buffer[++i];
       last_vol[channel] = args[1];
     } else if(event == MUS_NOTE_ON) {
