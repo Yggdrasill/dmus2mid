@@ -15,14 +15,25 @@ int main(int argc, char **argv)
 
   FILE *mus;
 
-  char buffer[BUFFER_SIZE];
-
   size_t size;
 
   int cmp;
 
   uint16_t mus_len;
   uint16_t mus_off;
+
+  uint32_t total_delay;
+  unsigned char cur_delay;
+
+  char buffer[BUFFER_SIZE];
+
+  unsigned char delay;
+  unsigned char event;
+  unsigned char channel;
+  unsigned char args[2];
+
+  char byte;
+  char last_vol[16] = {0};
 
   if(argc < 2) {
     printf("Too few arguments\n");
@@ -31,6 +42,11 @@ int main(int argc, char **argv)
 
   stat(argv[1], &st);
   size = st.st_size;
+  byte = 0;
+  delay = 0;
+
+  total_delay = 0;
+  cur_delay = 0;
 
   mus = fopen(argv[1], "rb");
 
@@ -41,6 +57,39 @@ int main(int argc, char **argv)
   fseek(mus, 4, SEEK_SET);
   fread(&mus_len, sizeof(mus_len), 1, mus);
   fread(&mus_off, sizeof(mus_off), 1, mus);
+
+  for(uint16_t i = mus_off; i < mus_len + mus_off; i++) {
+    byte = buffer[i];
+    delay = byte & 0x80;
+    event = byte >> 4 & 0x7;
+    channel = byte & 0xF;
+    cur_delay = 0;
+    total_delay = 0;
+
+    args[0] = buffer[++i];
+    args[1] = 0x00;
+
+    if(event != MUS_NOTE_ON && event != MUS_CTRL_EVENT) {
+      args[1] = 0xFF;
+    } else if(event == MUS_NOTE_ON && args[0] & 0x80) {
+      args[1] = buffer[++i];
+      last_vol[channel] = args[1];
+    } else if(event == MUS_NOTE_ON) {
+      args[1] = last_vol[channel];
+    } else if(event == MUS_CTRL_EVENT) {
+      args[1] = buffer[++i];
+    }
+
+    if(delay) {
+      do {
+        byte = buffer[++i];
+        cur_delay = byte & 0x7F;
+        total_delay = (total_delay << 7) + cur_delay;
+      } while(byte & 0x80);
+    }
+
+    printf("%4x %d %d:%-16s%2x %2x %2x %2x\n", i, delay >> 7, event, MUS_EVENT_STR[event], channel, args[0], args[1], total_delay);
+  }
 
   printf("%d %d %d\n", cmp, mus_len, mus_off);
 

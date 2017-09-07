@@ -76,6 +76,17 @@ const unsigned char MUS2MID_EVENT_TABLE[] = {
   0x00
 };
 
+const unsigned char MUS_EVENT_STR[][32] = {
+  "NOTE OFF",
+  "NOTE ON",
+  "PITCH WHEEL",
+  "SYSEVENT",
+  "CHANGE CTRL",
+  "UNKNOWN",
+  "END TRACK",
+  "UNKNOWN"
+};
+
 const unsigned char MUS2MID_CTRL_TABLE[] = {
   0x00,
   MIDC_BANK_SELECT,
