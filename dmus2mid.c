@@ -82,21 +82,29 @@ int main(int argc, char **argv)
     total_delay = 0;
 
     args[0] = buffer[++i];
-    args[1] = 0x00;
+    args[1] = 0xFF;
 
-    if(event != MUS_NOTE_ON && event != MUS_CTRL_EVENT) {
-      args[1] = 0xFF;
-    } else if(event == MUS_NOTE_ON && mus_msb_set(args[0]) ) {
-      args[1] = buffer[++i];
-      last_vol[channel] = args[1];
-    } else if(event == MUS_NOTE_ON) {
-      args[1] = last_vol[channel];
-    } else if(event == MUS_CTRL_EVENT && args[0] != 0x00) {
-      args[1] = buffer[++i];
-    } else if(event == MUS_CTRL_EVENT) {
-      args[0] = buffer[++i];
-      args[1] = 0xFF;
-      event = 5;
+    switch(event) {
+      case MUS_NOTE_OFF:
+      case MUS_PITCH_BEND:
+      case MUS_SYS_EVENT:
+      case MUS_FINISH:
+        break;
+      case MUS_NOTE_ON:
+        if(mus_msb_set(args[0]) ) args[1] = buffer[++i];
+        else args[1] = last_vol[channel];
+        last_vol[channel] = args[1];
+        break;
+      case MUS_CTRL_EVENT:
+        if(args[0] != 0x00) {
+          args[1] = buffer[++i];
+        } else {
+          event = 5;
+          args[0] = buffer[++i];
+        }
+        break;
+      default:
+        exit(-1);
     }
 
     if(delay) {
