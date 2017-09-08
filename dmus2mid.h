@@ -80,6 +80,17 @@ const char MUS2MID_EVENT_TABLE[] = {
   0x00
 };
 
+const char MUS2MID_EVENT_STR[][16] = {
+  "MIDI_NOTE_OFF",
+  "MIDI_NOTE_ON",
+  "MIDI_PITCH_BEND",
+  "MIDI_CTRL_EVENT",
+  "MIDI_CTRL_EVENT",
+  "MIDI_INSTR_CHNG", /* repurposed UNKNOWN */
+  "MIDI_END_TRACK",
+  "UNKNOWN"
+};
+
 const char MUS_EVENT_STR[][32] = {
   "NOTE OFF",
   "NOTE ON",
