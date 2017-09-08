@@ -103,7 +103,7 @@ int main(int argc, char **argv)
       } while(byte & 0x80);
     }
 
-    printf("%4x %d %d:%-16s%2x %2x %2x %2x\n", i, delay >> 7, event, MUS_EVENT_STR[event], channel, args[0], args[1], total_delay);
+    printf("%4x %d %d:%-16s%2x %2x %2x %2x\n", i, delay >> 7, event, MUS2MID_EVENT_STR[event], channel, args[0], args[1], total_delay);
   }
 
   printf("%d %d %d\n", cmp, mus_len, mus_off);
