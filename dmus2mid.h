@@ -69,7 +69,7 @@ struct MIDIchan {
   unsigned char dtime[MIDI_MAX_VARLEN];
 };
 
-const unsigned char MUS2MID_EVENT_TABLE[] = {
+const char MUS2MID_EVENT_TABLE[] = {
   MIDI_NOTE_OFF,
   MIDI_NOTE_ON,
   MIDI_PITCH_BEND,
@@ -80,7 +80,7 @@ const unsigned char MUS2MID_EVENT_TABLE[] = {
   0x00
 };
 
-const unsigned char MUS_EVENT_STR[][32] = {
+const char MUS_EVENT_STR[][32] = {
   "NOTE OFF",
   "NOTE ON",
   "PITCH WHEEL",
@@ -91,7 +91,7 @@ const unsigned char MUS_EVENT_STR[][32] = {
   "UNKNOWN"
 };
 
-const unsigned char MUS2MID_CTRL_TABLE[] = {
+const char MUS2MID_CTRL_TABLE[] = {
   0x00,
   MIDC_BANK_SELECT,
   MIDC_MOD_POT,
