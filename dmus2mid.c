@@ -91,8 +91,12 @@ int main(int argc, char **argv)
       last_vol[channel] = args[1];
     } else if(event == MUS_NOTE_ON) {
       args[1] = last_vol[channel];
-    } else if(event == MUS_CTRL_EVENT) {
+    } else if(event == MUS_CTRL_EVENT && args[0] != 0x00) {
       args[1] = buffer[++i];
+    } else if(event == MUS_CTRL_EVENT) {
+      args[0] = buffer[++i];
+      args[1] = 0xFF;
+      event = 5;
     }
 
     if(delay) {
