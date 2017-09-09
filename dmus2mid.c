@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   uint32_t midi_delay;
   unsigned char cur_delay;
 
-  char buffer[BUFFER_SIZE];
+  char read_buffer[BUFFER_SIZE];
   char *write_buffer = calloc(BUFFER_SIZE, sizeof(*write_buffer) );
 
   unsigned char delay;
@@ -75,9 +75,9 @@ int main(int argc, char **argv)
   mus = fopen(argv[1], "rb");
   mid = fopen("test.mid", "wb");
 
-  fread(buffer, sizeof(*buffer), size, mus);
+  fread(read_buffer, sizeof(*read_buffer), size, mus);
 
-  cmp = strncmp(MUS_HEADER_MAGIC, buffer, strlen(MUS_HEADER_MAGIC) );
+  cmp = strncmp(MUS_HEADER_MAGIC, read_buffer, strlen(MUS_HEADER_MAGIC) );
 
   fwrite(MIDI_HEADER_MAGIC, 1, sizeof(MIDI_HEADER_MAGIC) - 1, mid);
   fwrite(MIDI_HEADER_DATA, 1, sizeof(MIDI_HEADER_DATA) - 1, mid);
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
   fread(&mus_off, sizeof(mus_off), 1, mus);
 
   for(uint16_t i = mus_off; i < mus_len + mus_off; i++) {
-    byte = buffer[i];
+    byte = read_buffer[i];
     delay = mus_msb_set(byte);
     event = mus_event_type(byte);
     channel = mus_event_chan(byte);
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
     midi_delay = 0;
     mus_delay = 0;
 
-    args[0] = buffer[++i];
+    args[0] = read_buffer[++i];
     args[1] = 0xFF;
 
     switch(event) {
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
       case MUS_FINISH:
         break;
       case MUS_NOTE_ON:
-        if(mus_msb_set(args[0]) ) args[1] = buffer[++i];
+        if(mus_msb_set(args[0]) ) args[1] = read_buffer[++i];
         else args[1] = last_vol[channel];
         args[0] = args[0] & 0x7F;
         last_vol[channel] = args[1];
@@ -126,11 +126,11 @@ int main(int argc, char **argv)
       case MUS_CTRL_EVENT:
         if(args[0] != 0x00) {
           args[0] = MUS2MID_CTRL_TABLE[args[0]];
-          args[1] = buffer[++i];
+          args[1] = read_buffer[++i];
           args[1] = (args[1] & 0x80 ? 0x7F : args[1]);
         } else {
           event = 5;
-          args[0] = buffer[++i];
+          args[0] = read_buffer[++i];
         }
         break;
       default:
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 
     if(delay) {
       do {
-        byte = buffer[++i];
+        byte = read_buffer[++i];
         cur_delay = byte & 0x7F;
         total_delay = (total_delay << 7) + cur_delay;
       } while(byte & 0x80);
