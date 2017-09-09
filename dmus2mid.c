@@ -48,6 +48,7 @@ int main(int argc, char **argv)
   unsigned char delay;
   unsigned char event;
   unsigned char channel;
+  unsigned char midi_chan;
   unsigned char args[2];
 
   char byte;
@@ -81,6 +82,7 @@ int main(int argc, char **argv)
     delay = mus_msb_set(byte);
     event = mus_event_type(byte);
     channel = mus_event_chan(byte);
+    midi_chan = channel == 0x0F ? 0x09 : channel == 0x09 ? 0x0F : channel;
     cur_delay = 0;
     total_delay = 0;
     midi_delay = 0;
@@ -136,7 +138,7 @@ int main(int argc, char **argv)
 
       mus_delay = midi_delay;
       for(size_t j = 0; j < sizeof(mus_delay) && midi_delay; j++) {
-        chans[channel].dtime[j] = (unsigned char)midi_delay;
+        chans[midi_chan].dtime[j] = (unsigned char)midi_delay;
         midi_delay >>= 8;
       }
     }
