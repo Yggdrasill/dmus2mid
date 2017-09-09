@@ -86,18 +86,25 @@ int main(int argc, char **argv)
 
     switch(event) {
       case MUS_NOTE_OFF:
+        args[1] = 0x40;
       case MUS_PITCH_BEND:
-      case MUS_SYS_EVENT:
       case MUS_FINISH:
         break;
       case MUS_NOTE_ON:
         if(mus_msb_set(args[0]) ) args[1] = buffer[++i];
         else args[1] = last_vol[channel];
+        args[0] = args[0] & 0x7F;
         last_vol[channel] = args[1];
+        break;
+      case MUS_SYS_EVENT:
+        args[0] = MUS2MID_CTRL_TABLE[args[0]];
+        args[1] = 0x00;
         break;
       case MUS_CTRL_EVENT:
         if(args[0] != 0x00) {
+          args[0] = MUS2MID_CTRL_TABLE[args[0]];
           args[1] = buffer[++i];
+          args[1] = (args[1] & 0x80 ? 0x7F : args[1]);
         } else {
           event = 5;
           args[0] = buffer[++i];
