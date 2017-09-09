@@ -27,6 +27,7 @@ inline unsigned char mus_event_chan(unsigned char byte)
 int main(int argc, char **argv)
 {
   struct stat st;
+  struct MIDIchan chans[16] = {0};
 
   FILE *mus;
 
@@ -38,6 +39,8 @@ int main(int argc, char **argv)
   uint16_t mus_off;
 
   uint32_t total_delay;
+  uint32_t mus_delay;
+  uint32_t midi_delay;
   unsigned char cur_delay;
 
   char buffer[BUFFER_SIZE];
@@ -80,6 +83,8 @@ int main(int argc, char **argv)
     channel = mus_event_chan(byte);
     cur_delay = 0;
     total_delay = 0;
+    midi_delay = 0;
+    mus_delay = 0;
 
     args[0] = buffer[++i];
     args[1] = 0xFF;
@@ -120,6 +125,20 @@ int main(int argc, char **argv)
         cur_delay = byte & 0x7F;
         total_delay = (total_delay << 7) + cur_delay;
       } while(byte & 0x80);
+
+      mus_delay = total_delay;
+      midi_delay = mus_delay & 0x7F;
+      while( (mus_delay >>= 7) ) {
+        midi_delay <<= 8;
+        midi_delay |= 0x80;
+        midi_delay += (mus_delay & 0x7F);
+      }
+
+      mus_delay = midi_delay;
+      for(size_t j = 0; j < sizeof(mus_delay) && midi_delay; j++) {
+        chans[channel].dtime[j] = (unsigned char)midi_delay;
+        midi_delay >>= 8;
+      }
     }
 
     printf("%4x %d %d:%-16s%2x %2x %2x %2x\n", i, delay >> 7, event, MUS2MID_EVENT_STR[event], channel, args[0], args[1], total_delay);
