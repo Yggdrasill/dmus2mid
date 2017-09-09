@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -30,8 +31,10 @@ int main(int argc, char **argv)
   struct MIDIchan chans[16] = {0};
 
   FILE *mus;
+  FILE *mid;
 
   size_t size;
+  size_t pos;
 
   int cmp;
 
@@ -44,6 +47,7 @@ int main(int argc, char **argv)
   unsigned char cur_delay;
 
   char buffer[BUFFER_SIZE];
+  char *write_buffer = calloc(BUFFER_SIZE, sizeof(*write_buffer) );
 
   unsigned char delay;
   unsigned char event;
@@ -63,15 +67,27 @@ int main(int argc, char **argv)
   size = st.st_size;
   byte = 0;
   delay = 0;
+  pos = 0;
 
   total_delay = 0;
   cur_delay = 0;
 
   mus = fopen(argv[1], "rb");
+  mid = fopen("test.mid", "wb");
 
   fread(buffer, sizeof(*buffer), size, mus);
 
   cmp = strncmp(MUS_HEADER_MAGIC, buffer, strlen(MUS_HEADER_MAGIC) );
+
+  fwrite(MIDI_HEADER_MAGIC, 1, sizeof(MIDI_HEADER_MAGIC) - 1, mid);
+  fwrite(MIDI_HEADER_DATA, 1, sizeof(MIDI_HEADER_DATA) - 1, mid);
+  fwrite("\x00\x8c", 1, 2, mid);
+  fwrite(MIDI_MTRK_MAGIC, 1, sizeof(MIDI_MTRK_MAGIC) - 1, mid);
+
+  memcpy(write_buffer, MIDI_TEMPO_MAGIC, sizeof(MIDI_TEMPO_MAGIC) - 1);
+  pos += sizeof(MIDI_TEMPO_MAGIC) - 1;
+  write_buffer[pos] = 0x00;
+  pos++;
 
   fseek(mus, 4, SEEK_SET);
   fread(&mus_len, sizeof(mus_len), 1, mus);
@@ -121,6 +137,11 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
+    chans[channel].cur_event = MUS2MID_EVENT_TABLE[event];
+    chans[channel].chan = midi_chan;
+    chans[channel].args[0] = args[0];
+    chans[channel].args[1] = args[1];
+
     if(delay) {
       do {
         byte = buffer[++i];
@@ -143,12 +164,34 @@ int main(int argc, char **argv)
       }
     }
 
-    printf("%4x %d %d:%-16s%2x %2x %2x %2x\n", i, delay >> 7, event, MUS2MID_EVENT_STR[event], channel, args[0], args[1], total_delay);
+    printf("%4x %x %x:%-16s%2x %2x %2x%-1s", i, delay, MUS2MID_EVENT_TABLE[event], MUS2MID_EVENT_STR[event], channel, args[0], args[1] == 0xFF ? 0x00 : args[1], "");
+
+    write_buffer[pos++] = chans[channel].cur_event |
+                          chans[channel].chan;
+
+    write_buffer[pos++] = chans[channel].args[0];
+
+    if(chans[channel].args[1] != 0xFF) {
+      write_buffer[pos++] = chans[channel].args[1];
+    }
+
+    int j = 0;
+    do {
+      printf("%2x", chans[midi_chan].dtime[j]);
+      write_buffer[pos++] = chans[midi_chan].dtime[j];
+      chans[midi_chan].dtime[j] = 0;
+    } while(chans[midi_chan].dtime[++j] && j < MIDI_MAX_VARLEN);
+    puts("");
   }
 
   printf("%d %d %d\n", cmp, mus_len, mus_off);
+  fwrite(write_buffer, 1, pos, mid);
+  fwrite("\xFF\x2F\x00", 1, 4, mid);
+
+  free(write_buffer);
 
   fclose(mus);
+  fclose(mid);
 
   return 0;
 }

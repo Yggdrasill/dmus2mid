@@ -5,8 +5,9 @@
 
 #define MIDI_HEADER_MAGIC "MThd\x00\x00\x00\x06"
 #define MIDI_HEADER_DATA  "\x00\x00\x00\x01"
+#define MIDI_MTRK_MAGIC   "\x4d\x54\x72\x6b\x00\x00\x5F\x11"
 #define MIDI_KEYSIG_MAGIC "\x00\xFF\x59\x02\x00\x00"
-#define MIDI_TEMPO_MAGIC  "\x00\0xFF\x51\x03\x0F\x42\x40"
+#define MIDI_TEMPO_MAGIC  "\x00\xFF\x51\x03\x0F\x42\x40"
 
 #define MUS_SYSTEM_MIN    10
 #define MUS_SYSTEM_MAX    15
@@ -66,16 +67,17 @@ struct MIDIchan {
   unsigned char c_arg;
   unsigned char instr;
   unsigned char pitch[MIDI_SIZE_PITCH];
+  unsigned char args[2];
   unsigned char dtime[MIDI_MAX_VARLEN];
 };
 
-const char MUS2MID_EVENT_TABLE[] = {
+const unsigned char MUS2MID_EVENT_TABLE[] = {
   MIDI_NOTE_OFF,
   MIDI_NOTE_ON,
   MIDI_PITCH_BEND,
   MIDI_CTRL_EVENT,
   MIDI_CTRL_EVENT,
-  0x00,
+  MIDI_INSTR_CHNG,
   MIDI_END_TRACK,
   0x00
 };
