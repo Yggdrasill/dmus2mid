@@ -165,8 +165,6 @@ int main(int argc, char **argv)
       }
     }
 
-    printf("%4x %x %x:%-16s%2x %2x %2x%-1s", i, delay, MUS2MID_EVENT_TABLE[event], MUS2MID_EVENT_STR[event], channel, args[0], args[1] == 0xFF ? 0x00 : args[1], "");
-
     write_buffer[pos++] = chans[channel].cur_event |
                           chans[channel].chan;
 
@@ -178,14 +176,11 @@ int main(int argc, char **argv)
 
     int j = 0;
     do {
-      printf("%2x", chans[midi_chan].dtime[j]);
       write_buffer[pos++] = chans[midi_chan].dtime[j];
       chans[midi_chan].dtime[j] = 0;
     } while(chans[midi_chan].dtime[++j] && j < MIDI_MAX_VARLEN);
-    puts("");
   }
 
-  printf("%d %d %d\n", cmp, mus_len, mus_off);
   fwrite(write_buffer, 1, pos, mid);
   fwrite("\xFF\x2F\x00", 1, 4, mid);
 
