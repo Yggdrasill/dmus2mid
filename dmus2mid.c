@@ -97,6 +97,7 @@ int main(int argc, char **argv)
     byte = read_buffer[i];
     delay = mus_msb_set(byte);
     event = mus_event_type(byte);
+    if(event == MUS_FINISH) break;
     channel = mus_event_chan(byte);
     midi_chan = channel == 0x0F ? 0x09 : channel == 0x09 ? 0x0F : channel;
     cur_delay = 0;
