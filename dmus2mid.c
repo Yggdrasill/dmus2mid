@@ -15,6 +15,21 @@ inline unsigned char mus_msb_set(unsigned char byte)
   return byte >> 7;
 }
 
+inline unsigned char mus_msb_exclude(unsigned char byte)
+{
+  return byte & 0x7F;
+}
+
+inline uint32_t mus_delay_read(uint32_t delay, unsigned char byte)
+{
+  uint32_t retval;
+
+  byte = byte & 0x7F;
+  retval = (delay << 7) + byte;
+
+  return retval;
+}
+
 inline unsigned char mus_event_type(unsigned char byte)
 {
   return byte >> 4 & 0x7;
@@ -24,6 +39,38 @@ inline unsigned char mus_event_chan(unsigned char byte)
 {
   return byte & 0xF;
 }
+
+inline unsigned char mus_control_fix(unsigned char byte)
+{
+  return byte & 0x80 ? 0x7F : byte;
+}
+
+inline uint32_t mus2mid_delay_conv(uint32_t mus_delay, char *dtime)
+{
+  size_t i;
+  uint32_t midi_delay;
+
+  midi_delay = mus_delay & 0x7F;
+
+  while( (mus_delay >>= 7) ) {
+    midi_delay <<= 8;
+    midi_delay |= 0x80;
+    midi_delay += (mus_delay & 0x7F);
+  }
+
+  for(i = 0; i < MIDI_MAX_VARLEN && midi_delay; i++) {
+    dtime[i] = (unsigned char)midi_delay;
+    midi_delay >>= 8;
+  }
+
+  return midi_delay;
+}
+
+inline unsigned char mid_channel_fix(unsigned char byte)
+{
+  return byte == 0x0F ? 0x09 : byte == 0x09 ? 0x0F : byte;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -99,10 +146,10 @@ int main(int argc, char **argv)
     event = mus_event_type(byte);
     if(event == MUS_FINISH) break;
     channel = mus_event_chan(byte);
-    midi_chan = channel == 0x0F ? 0x09 : channel == 0x09 ? 0x0F : channel;
     cur_delay = 0;
     total_delay = 0;
     midi_delay = 0;
+    midi_chan = mid_channel_fix(channel);
     mus_delay = 0;
 
     args[0] = read_buffer[++i];
@@ -128,7 +175,7 @@ int main(int argc, char **argv)
         if(args[0] != 0x00) {
           args[0] = MUS2MID_CTRL_TABLE[args[0]];
           args[1] = read_buffer[++i];
-          args[1] = (args[1] & 0x80 ? 0x7F : args[1]);
+          args[1] = mus_control_fix(args[1]);
         } else {
           event = 5;
           args[0] = read_buffer[++i];
@@ -145,24 +192,11 @@ int main(int argc, char **argv)
 
     if(delay) {
       do {
-        byte = read_buffer[++i];
-        cur_delay = byte & 0x7F;
-        total_delay = (total_delay << 7) + cur_delay;
-      } while(byte & 0x80);
+        delay = read_buffer[++i];
+        mus_delay = mus_delay_read(mus_delay, delay);
+      } while(mus_msb_set(delay) );
 
-      mus_delay = total_delay;
-      midi_delay = mus_delay & 0x7F;
-      while( (mus_delay >>= 7) ) {
-        midi_delay <<= 8;
-        midi_delay |= 0x80;
-        midi_delay += (mus_delay & 0x7F);
-      }
-
-      mus_delay = midi_delay;
-      for(size_t j = 0; j < sizeof(mus_delay) && midi_delay; j++) {
-        chans[midi_chan].dtime[j] = (unsigned char)midi_delay;
-        midi_delay >>= 8;
-      }
+      mus2mid_delay_conv(mus_delay, chans[midi_chan].dtime);
     }
 
     write_buffer[pos++] = chans[channel].cur_event |
