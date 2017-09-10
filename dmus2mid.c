@@ -156,7 +156,7 @@ int main(int argc, char **argv)
       case MUS_NOTE_ON:
         if(mus_msb_set(args[0]) ) args[1] = read_buffer[++i];
         else args[1] = last_vol[channel];
-        args[0] = args[0] & 0x7F;
+        args[0] = mus_msb_exclude(args[0]);
         last_vol[channel] = args[1];
         break;
       case MUS_SYS_EVENT:
