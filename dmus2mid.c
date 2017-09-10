@@ -71,6 +71,60 @@ inline unsigned char mid_channel_fix(unsigned char byte)
   return byte == 0x0F ? 0x09 : byte == 0x09 ? 0x0F : byte;
 }
 
+int args_parse(int argc, char **argv, char **fname_mus,
+               char **fname_mid, uint16_t *tpqn)
+{
+  int arg;
+  int mask;
+  int stpqn;
+
+  mask = 0;
+  stpqn = MUS2MID_TPQN_DEFAULT;
+
+  while( (arg = getopt(argc, argv, "zreuqvt:") ) != -1) {
+    switch(arg) {
+      case 'r':
+        mask |= ARGS_USEZEROVEL;
+        mask &= ~(ARGS_NOZEROVEL);
+        break;
+      case 'z':
+        mask |= ARGS_USERUNNING;
+        mask &= ~(ARGS_NORUNNING);
+        break;
+      case 'e':
+        mask |= ARGS_NOZEROVEL;
+        mask &= ~(ARGS_USEZEROVEL);
+        break;
+      case 'u':
+        mask |= ARGS_NORUNNING;
+        mask &= ~(ARGS_USERUNNING);
+        break;
+      case 'q':
+        mask |= ARGS_QUIET;
+        mask &= ~(ARGS_VERBOSE);
+        break;
+      case 'v':
+        mask |= ARGS_VERBOSE;
+        mask &= ~(ARGS_QUIET);
+        break;
+      case 't':
+        stpqn = strtol(optarg, NULL, 0);
+        if(stpqn <= 0 || stpqn > MUS2MID_TPQN_MAX) {
+          printf("Ridiculous TPQN, setting to %d (default)",
+                 MUS2MID_TPQN_MAX);
+        } else {
+          *tpqn = stpqn;
+        }
+        break;
+    }
+  }
+
+  *fname_mus = argv[optind];
+  *fname_mid = argv[optind + 1];
+
+  return mask;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -89,6 +143,7 @@ int main(int argc, char **argv)
 
   uint16_t mus_len;
   uint16_t mus_off;
+  uint16_t tpqn;
 
   char read_buffer[BUFFER_SIZE];
   char *write_buffer = calloc(BUFFER_SIZE, sizeof(*write_buffer) );
@@ -101,24 +156,56 @@ int main(int argc, char **argv)
 
   char byte;
 
-  if(argc < 2) {
+  char *fname_mus;
+  char *fname_mid;
+
+  if(argc < 3) {
     printf("Too few arguments\n");
     exit(EXIT_FAILURE);
   }
 
-  stat(argv[1], &st);
+  args_parse(argc, argv, &fname_mus, &fname_mid, &tpqn);
+
+  if(!fname_mus) {
+    puts("MUS filename invalid\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if(!fname_mid) {
+    puts("MID filename invalid\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if(stat(fname_mus, &st) ) {
+    perror(fname_mus);
+    exit(EXIT_FAILURE);
+  }
+
   size = st.st_size;
   byte = 0;
   delay = 0;
   pos = 0;
 
+  mus = fopen(fname_mus, "rb");
 
-  mus = fopen(argv[1], "rb");
-  mid = fopen("test.mid", "wb");
+  if(!mus) {
+    perror(fname_mus);
+    exit(EXIT_FAILURE);
+  }
 
   fread(read_buffer, sizeof(*read_buffer), size, mus);
 
-  cmp = strncmp(MUS_HEADER_MAGIC, read_buffer, strlen(MUS_HEADER_MAGIC) );
+  if(memcmp(MUS_HEADER_MAGIC, read_buffer, sizeof(MUS_HEADER_MAGIC) - 1) ) {
+    printf("Not a MUS file!\n");
+    exit(EXIT_FAILURE);
+  }
+
+  mid = fopen(fname_mid, "wb");
+
+  if(!mid) {
+    perror(fname_mid);
+    exit(EXIT_FAILURE);
+  }
 
   fwrite(MIDI_HEADER_MAGIC, 1, sizeof(MIDI_HEADER_MAGIC) - 1, mid);
   fwrite(MIDI_HEADER_DATA, 1, sizeof(MIDI_HEADER_DATA) - 1, mid);

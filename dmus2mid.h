@@ -1,6 +1,16 @@
 #ifndef DMUS2MID_H
 #define DMUS2MID_H
 
+/*
+ * It is unreasonable to ask any software sequencer
+ * to keep up with less than 1 msec per tick. Hardware
+ * sequencers or extremely low-latency systems could do
+ * it, but most software sequencers can't.
+ */
+
+#define MUS2MID_TPQN_MAX      1000
+#define MUS2MID_TPQN_DEFAULT  140
+
 #define MUS_HEADER_MAGIC  "MUS\x1A"
 
 #define MIDI_HEADER_MAGIC "MThd\x00\x00\x00\x06"
@@ -26,6 +36,16 @@ unsigned char mus_event_chan(unsigned char);
 unsigned char mus_control_fix(unsigned char);
 uint32_t mus2mid_delay_conv(uint32_t, char *);
 unsigned char mid_channel_fix(unsigned char);
+
+enum ARGS {
+  ARGS_TPQN         = 0x01,
+  ARGS_USEZEROVEL   = 0x02,
+  ARGS_USERUNNING   = 0x04,
+  ARGS_NOZEROVEL    = 0x08,
+  ARGS_NORUNNING    = 0x10,
+  ARGS_QUIET        = 0x20,
+  ARGS_VERBOSE      = 0x40
+};
 
 enum MUS {
   MUS_NOTE_OFF      = 0x00,
