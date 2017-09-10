@@ -100,7 +100,6 @@ int main(int argc, char **argv)
   unsigned char args[2];
 
   char byte;
-  char last_vol[16] = {0};
 
   if(argc < 2) {
     printf("Too few arguments\n");
@@ -155,9 +154,9 @@ int main(int argc, char **argv)
         break;
       case MUS_NOTE_ON:
         if(mus_msb_set(args[0]) ) args[1] = read_buffer[++i];
-        else args[1] = last_vol[channel];
+        else args[1] = chans[midi_chan].volume;
         args[0] = mus_msb_exclude(args[0]);
-        last_vol[channel] = args[1];
+        chans[midi_chan].volume = args[1];
         break;
       case MUS_SYS_EVENT:
         args[0] = MUS2MID_CTRL_TABLE[args[0]];

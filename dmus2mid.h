@@ -67,6 +67,7 @@ struct MIDIchan {
   unsigned char cur_event;
   unsigned char prev_event;
   unsigned char chan;
+  unsigned char volume;
   unsigned char ctrl;
   unsigned char args[2];
   unsigned char dtime[MIDI_MAX_VARLEN];
