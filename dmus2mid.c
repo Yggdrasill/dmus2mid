@@ -83,15 +83,12 @@ int main(int argc, char **argv)
   size_t size;
   size_t pos;
 
+  uint32_t mus_delay;
+
   int cmp;
 
   uint16_t mus_len;
   uint16_t mus_off;
-
-  uint32_t total_delay;
-  uint32_t mus_delay;
-  uint32_t midi_delay;
-  unsigned char cur_delay;
 
   char read_buffer[BUFFER_SIZE];
   char *write_buffer = calloc(BUFFER_SIZE, sizeof(*write_buffer) );
@@ -116,8 +113,6 @@ int main(int argc, char **argv)
   delay = 0;
   pos = 0;
 
-  total_delay = 0;
-  cur_delay = 0;
 
   mus = fopen(argv[1], "rb");
   mid = fopen("test.mid", "wb");
@@ -146,9 +141,6 @@ int main(int argc, char **argv)
     event = mus_event_type(byte);
     if(event == MUS_FINISH) break;
     channel = mus_event_chan(byte);
-    cur_delay = 0;
-    total_delay = 0;
-    midi_delay = 0;
     midi_chan = mid_channel_fix(channel);
     mus_delay = 0;
 
