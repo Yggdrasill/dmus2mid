@@ -64,9 +64,9 @@ enum MIDC {
 };
 
 struct MIDIchan {
-  unsigned char cur_event;
+  unsigned char event;
   unsigned char prev_event;
-  unsigned char chan;
+  unsigned char channel;
   unsigned char volume;
   unsigned char ctrl;
   unsigned char args[2];

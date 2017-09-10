@@ -176,10 +176,10 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    chans[channel].cur_event = MUS2MID_EVENT_TABLE[event];
-    chans[channel].chan = midi_chan;
-    chans[channel].args[0] = args[0];
-    chans[channel].args[1] = args[1];
+    chans[midi_chan].event = MUS2MID_EVENT_TABLE[event];
+    chans[midi_chan].channel = midi_chan;
+    chans[midi_chan].args[0] = args[0];
+    chans[midi_chan].args[1] = args[1];
 
     if(delay) {
       do {
@@ -190,13 +190,13 @@ int main(int argc, char **argv)
       mus2mid_delay_conv(mus_delay, chans[midi_chan].dtime);
     }
 
-    write_buffer[pos++] = chans[channel].cur_event |
-                          chans[channel].chan;
+    write_buffer[pos++] = chans[midi_chan].event |
+                          chans[midi_chan].channel;
 
-    write_buffer[pos++] = chans[channel].args[0];
+    write_buffer[pos++] = chans[midi_chan].args[0];
 
-    if(chans[channel].args[1] != 0xFF) {
-      write_buffer[pos++] = chans[channel].args[1];
+    if(chans[midi_chan].args[1] != 0xFF) {
+      write_buffer[pos++] = chans[midi_chan].args[1];
     }
 
     int j = 0;
