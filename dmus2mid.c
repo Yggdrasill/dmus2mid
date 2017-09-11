@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <arpa/inet.h>
+
 #include "dmus2mid.h"
 
 inline unsigned char mus_msb_set(unsigned char byte)
@@ -64,17 +66,6 @@ inline uint32_t mus2mid_delay_conv(uint32_t mus_delay, char *dtime)
   }
 
   return midi_delay;
-}
-
-uint16_t mus2mid_byteswap(uint16_t bytes)
-{
-  uint16_t retval;
-  unsigned char b[sizeof(bytes)];
-
-  b[1] = bytes & 0xFF;
-  b[0] = (bytes & 0xFF00) >> 8;
-
-  retval = *(uint16_t *)b;
 }
 
 inline unsigned char mid_channel_fix(unsigned char byte)
@@ -220,7 +211,9 @@ int main(int argc, char **argv)
 
   fwrite(MIDI_HEADER_MAGIC, 1, sizeof(MIDI_HEADER_MAGIC) - 1, mid);
   fwrite(MIDI_HEADER_DATA, 1, sizeof(MIDI_HEADER_DATA) - 1, mid);
-  tpqn = mus2mid_byteswap(tpqn);
+
+  tpqn = htons(tpqn);
+
   fwrite(&tpqn, sizeof(tpqn), 1, mid);
   fwrite(MIDI_MTRK_MAGIC, 1, sizeof(MIDI_MTRK_MAGIC) - 1, mid);
 
