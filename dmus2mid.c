@@ -112,8 +112,8 @@ int args_parse(int argc, char **argv, char **fname_mus,
       case 't':
         stpqn = strtol(optarg, NULL, 0);
         if(stpqn <= 0 || stpqn > MUS2MID_TPQN_MAX) {
-          printf("Ridiculous TPQN, setting to %d (default)",
-                 MUS2MID_TPQN_MAX);
+          printf("Ridiculous TPQN, setting to %d (default)\n",
+                 MUS2MID_TPQN_DEFAULT);
         } else {
           *tpqn = stpqn;
         }
