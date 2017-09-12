@@ -326,6 +326,11 @@ int main(int argc, char **argv)
   fread(&mus_len, sizeof(mus_len), 1, mus);
   fread(&mus_off, sizeof(mus_off), 1, mus);
 
+  if(mus_len <= mus_off) {
+    printf("Unexpected end of file\n");
+    exit(EXIT_FAILURE);
+  }
+
   for(uint16_t i = mus_off; i < mus_len + mus_off; i++) {
     byte = read_buffer[i];
     delay = mus_msb_set(byte);
