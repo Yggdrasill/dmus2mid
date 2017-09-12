@@ -352,6 +352,9 @@ int main(int argc, char **argv)
         }
         break;
       case MUS_PITCH_BEND:
+        args[1] = args[0];
+        args[0] = args[0] << 6;
+        break;
       case MUS_FINISH:
         event = MUS_UNKNOWN2;
         midi_chan = 0;
