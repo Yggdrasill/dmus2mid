@@ -88,6 +88,13 @@ enum MIDC {
   MIDC_RSTA         = 0x79
 };
 
+struct Buffer {
+  size_t length;
+  size_t offset;
+  size_t io_count;
+  char *buffer;
+};
+
 struct MIDIchan {
   unsigned char event;
   unsigned char prev_event;

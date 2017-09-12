@@ -135,11 +135,93 @@ int args_parse(int argc, char **argv, char **fname_mus,
   return mask;
 }
 
+char *buffer_init(struct Buffer *buffer, size_t size)
+{
+  if(!buffer) return NULL;
+
+  buffer->length = size;
+  buffer->offset = 0;
+  buffer->io_count = 0;
+  buffer->buffer = malloc(size);
+
+  return buffer->buffer;
+}
+
+size_t mwrite(struct Buffer *dst,
+              void *src,
+              size_t size,
+              size_t nmemb,
+              FILE *out)
+{
+  size_t retval;
+  size_t length;
+  size_t offset;
+  size_t bytes;
+  size_t i;
+
+  char *buffer;
+
+  if(!src || !out) return 0;
+  if(size == 0 || nmemb == 0) return 0;
+
+  /* prevent integer overflow and buffer overflow */
+
+  if(nmemb > SIZE_MAX / size && size * nmemb > dst->length) {
+    printf("mwrite(): elements too large\n");
+    return 0;
+  }
+
+  retval  = 0;
+  length  = dst->length;
+  offset  = dst->offset;
+  buffer  = dst->buffer;
+  bytes   = size * nmemb;
+
+  if(!buffer) return 0;
+
+  if(bytes > length - offset) {
+    retval = fwrite(buffer, sizeof(*buffer), offset, out);
+    retval += fwrite(src, size, nmemb, out);
+    dst->io_count += offset;
+    offset = 0;
+  } else if(bytes > 1) {
+    memcpy(buffer, src, bytes);
+    retval = bytes;
+    offset += bytes;
+  } else if(bytes < 2) {
+    buffer[offset] = *(char *)src;
+    retval = 1;
+    offset++;
+  }
+
+  dst->offset = offset;
+
+  return retval;
+}
+
+size_t mwrite_byte(struct Buffer *dst,
+                  char byte,
+                  FILE *out)
+{
+  size_t retval;
+
+  retval = mwrite(dst, &byte, 1, 1, out);
+
+  return retval;
+}
+
+size_t mflush(struct Buffer *src, FILE *out)
+{
+  src->io_count += src->offset;
+  return fwrite(src->buffer, 1, src->offset, out);
+}
 
 int main(int argc, char **argv)
 {
   struct stat st;
+
   struct MIDIchan chans[16] = {0};
+  struct Buffer write_buffer;
 
   FILE *mus;
   FILE *mid;
@@ -158,7 +240,6 @@ int main(int argc, char **argv)
   uint16_t tpqn;
 
   char read_buffer[BUFFER_SIZE];
-  char *write_buffer = calloc(BUFFER_SIZE, sizeof(*write_buffer) );
 
   unsigned char delay;
   unsigned char event;
@@ -221,6 +302,11 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
+  if(!buffer_init(&write_buffer, BUFFER_SIZE) ) {
+    perror(argv[0]);
+    exit(EXIT_FAILURE);
+  }
+
   fwrite(MIDI_HEADER_MAGIC, 1, sizeof(MIDI_HEADER_MAGIC) - 1, mid);
   fwrite(MIDI_HEADER_DATA, 1, sizeof(MIDI_HEADER_DATA) - 1, mid);
 
@@ -229,12 +315,12 @@ int main(int argc, char **argv)
   fwrite(&tpqn, sizeof(tpqn), 1, mid);
   fwrite(MIDI_MTRK_MAGIC, 1, sizeof(MIDI_MTRK_MAGIC) - 1, mid);
 
-  memcpy(write_buffer, MIDI_TEMPO_MAGIC, sizeof(MIDI_TEMPO_MAGIC) - 1);
-  pos += sizeof(MIDI_TEMPO_MAGIC) - 1;
-  write_buffer[pos] = 0x00;
-  pos++;
   mtrk_len_offset = ftell(mid);
+
   fwrite(MIDI_MTRK_LENGTH, 1, sizeof(MIDI_MTRK_LENGTH) - 1, mid);
+
+  mwrite(&write_buffer, MIDI_TEMPO_MAGIC, 1, sizeof(MIDI_TEMPO_MAGIC) - 1, mid);
+  mwrite_byte(&write_buffer, 0x00, mid);
 
   fseek(mus, 4, SEEK_SET);
   fread(&mus_len, sizeof(mus_len), 1, mus);
@@ -307,19 +393,20 @@ int main(int argc, char **argv)
     }
 
     if(NORUNNING) {
-      write_buffer[pos++] = chans[midi_chan].event |
-                            chans[midi_chan].channel;
+      mwrite_byte(&write_buffer,
+                  chans[midi_chan].event | chans[midi_chan].channel,
+                  mid);
     }
 
-    write_buffer[pos++] = chans[midi_chan].args[0];
+    mwrite_byte(&write_buffer, chans[midi_chan].args[0], mid);
 
     if(chans[midi_chan].args[1] != 0xFF) {
-      write_buffer[pos++] = chans[midi_chan].args[1];
+      mwrite_byte(&write_buffer, chans[midi_chan].args[1], mid);
     }
 
     int j = 0;
     do {
-      write_buffer[pos++] = chans[midi_chan].dtime[j];
+      mwrite_byte(&write_buffer, chans[midi_chan].dtime[j], mid);
       chans[midi_chan].dtime[j] = 0;
     } while(chans[midi_chan].dtime[++j] && j < MIDI_MAX_VARLEN);
 
@@ -327,11 +414,9 @@ int main(int argc, char **argv)
     prev_chan = midi_chan;
   }
 
-  fwrite(write_buffer, 1, pos, mid);
-  fwrite("\xFF\x2F\x00", 1, 4, mid);
-  free(write_buffer);
+  mflush(&write_buffer, mid);
   fseek(mid, mtrk_len_offset, SEEK_SET);
-  pos = htonl(pos);
+  pos = htonl(write_buffer.io_count);
   fwrite(&pos, sizeof(pos), 1, mid);
 
   fclose(mus);
