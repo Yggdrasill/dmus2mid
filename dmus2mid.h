@@ -47,6 +47,8 @@ enum ARGS {
   ARGS_VERBOSE      = 0x40
 };
 
+#define DEFAULT_ARGS (ARGS_USERUNNING | ARGS_NOZEROVEL)
+
 enum MUS {
   MUS_NOTE_OFF      = 0x00,
   MUS_NOTE_ON       = 0x01,

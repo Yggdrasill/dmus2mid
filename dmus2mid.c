@@ -83,15 +83,17 @@ int args_parse(int argc, char **argv, char **fname_mus,
   mask = 0;
   stpqn = MUS2MID_TPQN_DEFAULT;
 
+  mask = DEFAULT_ARGS;
+
   while( (arg = getopt(argc, argv, "zreuqvt:") ) != -1) {
     switch(arg) {
       case 'r':
-        mask |= ARGS_USEZEROVEL;
-        mask &= ~(ARGS_NOZEROVEL);
-        break;
-      case 'z':
         mask |= ARGS_USERUNNING;
         mask &= ~(ARGS_NORUNNING);
+        break;
+      case 'z':
+        mask |= ARGS_USEZEROVEL;
+        mask &= ~(ARGS_NOZEROVEL);
         break;
       case 'e':
         mask |= ARGS_NOZEROVEL;
