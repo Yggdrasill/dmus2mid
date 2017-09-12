@@ -250,7 +250,13 @@ int main(int argc, char **argv)
 
     switch(event) {
       case MUS_NOTE_OFF:
-        args[1] = 0x40;
+        if(arg_mask & ARGS_USEZEROVEL) {
+          event = MUS_NOTE_ON;
+          args[1] = 0x00;
+        } else {
+          args[1] = 0x40;
+        }
+        break;
       case MUS_PITCH_BEND:
       case MUS_FINISH:
         break;
