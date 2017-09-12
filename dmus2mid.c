@@ -378,11 +378,12 @@ int main(int argc, char **argv)
           args[1] = read_buffer[++i];
           args[1] = mus_control_fix(args[1]);
         } else {
-          event = 5;
+          event = MUS_UNKNOWN1;
           args[0] = read_buffer[++i];
         }
         break;
       default:
+        printf("Unknown event %x\n", event);
         exit(-1);
     }
 
