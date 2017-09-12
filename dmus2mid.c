@@ -12,6 +12,11 @@
 
 #include "dmus2mid.h"
 
+#define NORUNNING   arg_mask & ARGS_NORUNNING \
+                    || arg_mask & ARGS_USERUNNING \
+                    && (chans[midi_chan].event != chans[midi_chan].prev_event \
+                    || midi_chan != prev_chan)
+
 inline unsigned char mus_msb_set(unsigned char byte)
 {
   return byte >> 7;
@@ -114,14 +119,15 @@ int args_parse(int argc, char **argv, char **fname_mus,
       case 't':
         stpqn = strtol(optarg, NULL, 0);
         if(stpqn <= 0 || stpqn > MUS2MID_TPQN_MAX) {
-          printf("Ridiculous TPQN, setting to %d (default)\n",
+          stpqn = MUS2MID_TPQN_DEFAULT;
+          printf("Ridiculous TPQN, ignoring\n",
                  MUS2MID_TPQN_DEFAULT);
-        } else {
-          *tpqn = stpqn;
         }
         break;
     }
   }
+
+  *tpqn = stpqn;
 
   *fname_mus = argv[optind];
   *fname_mid = argv[optind + 1];
@@ -143,7 +149,7 @@ int main(int argc, char **argv)
 
   uint32_t mus_delay;
 
-  int cmp;
+  int arg_mask;
 
   uint16_t mus_len;
   uint16_t mus_off;
@@ -156,6 +162,7 @@ int main(int argc, char **argv)
   unsigned char event;
   unsigned char channel;
   unsigned char midi_chan;
+  unsigned char prev_chan;
   unsigned char args[2];
 
   char byte;
@@ -168,7 +175,7 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  args_parse(argc, argv, &fname_mus, &fname_mid, &tpqn);
+  arg_mask = args_parse(argc, argv, &fname_mus, &fname_mid, &tpqn);
 
   if(!fname_mus) {
     puts("MUS filename invalid\n");
@@ -189,6 +196,7 @@ int main(int argc, char **argv)
   byte = 0;
   delay = 0;
   pos = 0;
+  prev_chan = 0xFF;
 
   mus = fopen(fname_mus, "rb");
 
@@ -284,8 +292,10 @@ int main(int argc, char **argv)
       mus2mid_delay_conv(mus_delay, chans[midi_chan].dtime);
     }
 
-    write_buffer[pos++] = chans[midi_chan].event |
-                          chans[midi_chan].channel;
+    if(NORUNNING) {
+      write_buffer[pos++] = chans[midi_chan].event |
+                            chans[midi_chan].channel;
+    }
 
     write_buffer[pos++] = chans[midi_chan].args[0];
 
@@ -298,11 +308,13 @@ int main(int argc, char **argv)
       write_buffer[pos++] = chans[midi_chan].dtime[j];
       chans[midi_chan].dtime[j] = 0;
     } while(chans[midi_chan].dtime[++j] && j < MIDI_MAX_VARLEN);
+
+    chans[midi_chan].prev_event = chans[midi_chan].event;
+    prev_chan = midi_chan;
   }
 
   fwrite(write_buffer, 1, pos, mid);
   fwrite("\xFF\x2F\x00", 1, 4, mid);
-
   free(write_buffer);
 
   fclose(mus);
