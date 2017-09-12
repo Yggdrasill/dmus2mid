@@ -56,7 +56,9 @@ enum MUS {
   MUS_PITCH_BEND    = 0x02,
   MUS_SYS_EVENT     = 0x03,
   MUS_CTRL_EVENT    = 0x04,
-  MUS_FINISH        = 0x06
+  MUS_UNKNOWN1      = 0x05,
+  MUS_FINISH        = 0x06,
+  MUS_UNKNOWN2      = 0x07
 };
 
 enum MIDI {
@@ -104,7 +106,7 @@ const unsigned char MUS2MID_EVENT_TABLE[] = {
   MIDI_CTRL_EVENT,
   MIDI_INSTR_CHNG,
   MIDI_END_TRACK,
-  0x00
+  MIDI_META
 };
 
 const char MUS2MID_CTRL_TABLE[] = {

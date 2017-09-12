@@ -244,7 +244,6 @@ int main(int argc, char **argv)
     byte = read_buffer[i];
     delay = mus_msb_set(byte);
     event = mus_event_type(byte);
-    if(event == MUS_FINISH) break;
     channel = mus_event_chan(byte);
     midi_chan = mid_channel_fix(channel);
     mus_delay = 0;
@@ -263,6 +262,11 @@ int main(int argc, char **argv)
         break;
       case MUS_PITCH_BEND:
       case MUS_FINISH:
+        event = MUS_UNKNOWN2;
+        midi_chan = 0;
+        args[0] = 0x2F;
+        delay = 0;
+        chans[midi_chan].dtime[0] = 0;
         break;
       case MUS_NOTE_ON:
         if(mus_msb_set(args[0]) ) args[1] = read_buffer[++i];
