@@ -331,6 +331,13 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
+  for(midi_chan = 0; midi_chan < MIDI_MAX_CHANS; midi_chan++) {
+    mwrite_byte(&write_buffer, 0xB0 | midi_chan, mid);
+    mwrite_byte(&write_buffer, 0x07, mid);
+    mwrite_byte(&write_buffer, 0x7F, mid);
+    mwrite_byte(&write_buffer, 0x00, mid);
+  }
+
   for(uint16_t i = mus_off; i < mus_len + mus_off; i++) {
     byte = read_buffer[i];
     delay = mus_msb_set(byte);
