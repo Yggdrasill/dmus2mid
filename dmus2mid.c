@@ -145,8 +145,10 @@ int main(int argc, char **argv)
   FILE *mid;
 
   size_t size;
-  size_t pos;
 
+  long mtrk_len_offset;
+
+  uint32_t pos;
   uint32_t mus_delay;
 
   int arg_mask;
@@ -231,6 +233,8 @@ int main(int argc, char **argv)
   pos += sizeof(MIDI_TEMPO_MAGIC) - 1;
   write_buffer[pos] = 0x00;
   pos++;
+  mtrk_len_offset = ftell(mid);
+  fwrite(MIDI_MTRK_LENGTH, 1, sizeof(MIDI_MTRK_LENGTH) - 1, mid);
 
   fseek(mus, 4, SEEK_SET);
   fread(&mus_len, sizeof(mus_len), 1, mus);
@@ -322,6 +326,9 @@ int main(int argc, char **argv)
   fwrite(write_buffer, 1, pos, mid);
   fwrite("\xFF\x2F\x00", 1, 4, mid);
   free(write_buffer);
+  fseek(mid, mtrk_len_offset, SEEK_SET);
+  pos = htonl(pos);
+  fwrite(&pos, sizeof(pos), 1, mid);
 
   fclose(mus);
   fclose(mid);

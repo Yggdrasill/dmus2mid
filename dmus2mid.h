@@ -15,7 +15,8 @@
 
 #define MIDI_HEADER_MAGIC "MThd\x00\x00\x00\x06"
 #define MIDI_HEADER_DATA  "\x00\x00\x00\x01"
-#define MIDI_MTRK_MAGIC   "\x4d\x54\x72\x6b\x00\x00\x5F\x11"
+#define MIDI_MTRK_MAGIC   "\x4d\x54\x72\x6b"
+#define MIDI_MTRK_LENGTH  "\x00\x00\x00\x00"
 #define MIDI_KEYSIG_MAGIC "\x00\xFF\x59\x02\x00\x00"
 #define MIDI_TEMPO_MAGIC  "\x00\xFF\x51\x03\x0F\x42\x40"
 
