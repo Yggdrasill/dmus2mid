@@ -238,6 +238,7 @@ int main(int argc, char **argv)
 
   uint16_t mus_len;
   uint16_t mus_off;
+  uint16_t mus_channels;
   uint16_t tpqn;
 
   char read_buffer[BUFFER_SIZE];
@@ -326,6 +327,7 @@ int main(int argc, char **argv)
   fseek(mus, 4, SEEK_SET);
   fread(&mus_len, sizeof(mus_len), 1, mus);
   fread(&mus_off, sizeof(mus_off), 1, mus);
+  fread(&mus_channels, sizeof(mus_channels), 1, mus);
 
   if(mus_len <= mus_off) {
     printf("Unexpected end of file\n");
@@ -378,7 +380,7 @@ int main(int argc, char **argv)
         break;
       case MUS_SYS_EVENT:
         args[0] = MUS2MID_CTRL_TABLE[args[0]];
-        args[1] = 0x00;
+        args[1] = args[0] == MIDC_MONO ? mus_channels : 0x00;
         break;
       case MUS_CTRL_EVENT:
         if(args[0] != 0x00) {
