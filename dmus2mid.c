@@ -12,11 +12,6 @@
 
 #include "dmus2mid.h"
 
-#define NORUNNING   arg_mask & ARGS_NORUNNING \
-                    || arg_mask & ARGS_USERUNNING \
-                    && (chans[midi_chan].event != chans[midi_chan].prev_event \
-                    || midi_chan != prev_chan)
-
 inline unsigned char mus_msb_set(unsigned char byte)
 {
   return byte >> 7;
@@ -76,6 +71,12 @@ inline uint32_t mus2mid_delay_conv(uint32_t mus_delay, char *dtime)
 inline unsigned char mid_channel_fix(unsigned char byte)
 {
   return byte == 0x0F ? 0x09 : byte == 0x09 ? 0x0F : byte;
+}
+
+int isrunning(struct MIDIchan *chan, int arg_mask, unsigned char prev_chan)
+{
+  return arg_mask & ARGS_NORUNNING || arg_mask & ARGS_USERUNNING
+         && (chan->event != chan->prev_event || chan->channel != prev_chan);
 }
 
 int args_parse(int argc, char **argv, char **fname_mus,
@@ -408,7 +409,7 @@ int main(int argc, char **argv)
       mus2mid_delay_conv(mus_delay, chans[midi_chan].dtime);
     }
 
-    if(NORUNNING) {
+    if(isrunning) {
       mwrite_byte(&write_buffer,
                   chans[midi_chan].event | chans[midi_chan].channel,
                   mid);
