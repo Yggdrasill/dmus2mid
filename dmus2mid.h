@@ -88,6 +88,24 @@ enum MIDC {
   MIDC_RSTA         = 0x79
 };
 
+enum MUSC {
+  MUSC_INSTR_CHNG   = 0x00,
+  MUSC_BANK_SELECT  = 0x01,
+  MUSC_MOD_POT      = 0x02,
+  MUSC_VOLUME       = 0x03,
+  MUSC_PAN_POT      = 0x04,
+  MUSC_EXPR_POT     = 0x05,
+  MUSC_REVERB       = 0x06,
+  MUSC_CHORUS       = 0x07,
+  MUSC_SUSTAIN      = 0x08,
+  MUSC_SOFT_PEDAL   = 0x09,
+  MUSC_MUTE_ALL     = 0x0A,
+  MUSC_NOTEOFF_ALL  = 0x0B,
+  MUSC_MONO         = 0x0C,
+  MUSC_POLY         = 0x0D,
+  MUSC_RESET_CTRLS  = 0x0E
+};
+
 struct Buffer {
   size_t length;
   size_t offset;
