@@ -426,8 +426,8 @@ int main(int argc, char **argv)
     int j = 0;
     do {
       mwrite_byte(&write_buffer, chans[midi_chan].dtime[j], mid);
-      chans[midi_chan].dtime[j] = 0;
-    } while(chans[midi_chan].dtime[++j] && j < MIDI_MAX_VARLEN);
+    } while(mus_msb_set(chans[midi_chan].dtime[j]) && ++j < MIDI_MAX_VARLEN);
+    memset(chans[midi_chan].dtime, 0x00, MIDI_MAX_VARLEN);
 
     chans[midi_chan].prev_event = chans[midi_chan].event;
     prev_chan = midi_chan;
