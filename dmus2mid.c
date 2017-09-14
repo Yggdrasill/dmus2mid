@@ -47,7 +47,7 @@ inline unsigned char mus_control_fix(unsigned char byte)
   return byte & 0x80 ? 0x7F : byte;
 }
 
-inline uint32_t mus2mid_delay_conv(uint32_t mus_delay, char *dtime)
+inline uint32_t mus2mid_delay_conv(uint32_t mus_delay, unsigned char *dtime)
 {
   size_t i;
   uint32_t midi_delay;

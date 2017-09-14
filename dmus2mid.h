@@ -35,7 +35,7 @@ uint32_t mus_delay_read(uint32_t, unsigned char);
 unsigned char mus_event_type(unsigned char);
 unsigned char mus_event_chan(unsigned char);
 unsigned char mus_control_fix(unsigned char);
-uint32_t mus2mid_delay_conv(uint32_t, char *);
+uint32_t mus2mid_delay_conv(uint32_t, unsigned char *);
 unsigned char mid_channel_fix(unsigned char);
 
 enum ARGS {
