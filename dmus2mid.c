@@ -156,6 +156,75 @@ char *buffer_free(struct Buffer *buffer)
   free(buffer->buffer);
 }
 
+size_t mread(struct Buffer *src,
+            void *dst,
+            size_t size,
+            size_t nmemb,
+            FILE *in)
+{
+  size_t bufsize;
+  size_t length;
+  size_t offset;
+  size_t bytes;
+
+  char *buffer;
+
+  if(!src || !dst || !in) return 0;
+  if(size == 0 || nmemb == 0) return 0;
+
+  if(nmemb > SIZE_MAX / size || size * nmemb > src->bufsize) {
+    printf("mread(): read too large\n");
+    return 0;
+  }
+
+  bufsize = src->bufsize;
+  length  = src->length;
+  offset  = src->offset;
+  buffer  = src->buffer;
+  bytes   = size * nmemb;
+
+  if(!buffer) return 0;
+  if(!length) return 0;
+
+  if(!src->io_count) {
+    length = fread(buffer, sizeof(*buffer), bufsize, in);
+    offset = 0;
+  }
+  else if(bytes >= bufsize - offset) {
+    memmove(buffer, buffer + offset, bufsize - offset);
+    offset = bufsize - offset;
+    length = fread(buffer + offset, sizeof(*buffer), bufsize - offset, in);
+    offset = 0;
+  }
+
+  if(bytes == 1) {
+    *(char *)dst = buffer[offset];
+  } else {
+    memcpy(dst, buffer + offset, bytes);
+  }
+
+  src->length = length;
+  src->io_count += bytes;
+  src->offset = offset + bytes;
+
+  return bytes;
+}
+
+size_t mread_byte(struct Buffer *src, char *byte, FILE *in)
+{
+  return mread(src, byte, 1, 1, in);
+}
+
+int msetoffset(struct Buffer *src, size_t offset)
+{
+  if(!src) return -1;
+  if(offset > src->bufsize) return -2;
+
+  src->offset = offset;
+
+  return 0;
+}
+
 size_t mwrite(struct Buffer *dst,
               void *src,
               size_t size,
