@@ -304,29 +304,52 @@ size_t mid_metadata_write(FILE *mid, uint16_t tpqn)
   return retval;
 }
 
-
-int main(int argc, char **argv)
+int mus_validate(FILE *mus, struct Buffer *read_buffer)
 {
-  struct MIDIchan channels[MIDI_MAX_CHANS];
-  struct Buffer write_buffer;
-  struct Buffer read_buffer;
+  char mus_header[MUS_HEADER_LENGTH];
 
-  struct MIDIchan *channel;
+  mread(read_buffer, mus_header, sizeof(*mus_header), MUS_HEADER_LENGTH, mus);
 
-  FILE *mus;
-  FILE *mid;
+  if(memcmp(MUS_HEADER_MAGIC, mus_header, MUS_HEADER_LENGTH) ) {
+    printf("Not a MUS file!\n");
+    exit(EXIT_FAILURE);
+  }
 
-  long mtrk_len_offset;
+  return 0;
+}
 
-  uint32_t pos;
-  uint32_t mus_delay;
-
-  int arg_mask;
-
+int mus_metadata_read(FILE *mus, struct Buffer *read_buffer, uint16_t *mus_channels)
+{
   uint16_t mus_len;
   uint16_t mus_off;
-  uint16_t mus_channels;
-  uint16_t tpqn;
+
+  mread(read_buffer, &mus_len, sizeof(mus_len), 1, mus);
+  mread(read_buffer, &mus_off, sizeof(mus_off), 1, mus);
+  mread(read_buffer, mus_channels, sizeof(mus_channels), 1, mus);
+
+  if(mus_len <= mus_off) {
+    printf("Unexpected end of file\n");
+    exit(EXIT_FAILURE);
+  }
+
+  msetoffset(read_buffer, mus_off);
+
+  return 0;
+}
+
+int mus2mid_convert(FILE *mid,
+                    FILE *mus,
+                    struct Buffer *read_buffer,
+                    struct Buffer *write_buffer,
+                    int arg_mask,
+                    uint16_t mus_channels)
+{
+  struct MIDIchan channels[MIDI_MAX_CHANS];
+  struct MIDIchan *channel;
+
+  uint32_t mus_delay;
+
+  int j;
 
   unsigned char delay;
   unsigned char event;
@@ -335,90 +358,26 @@ int main(int argc, char **argv)
   unsigned char prev_chan;
   unsigned char args[2];
 
-  char byte;
-
-  char *fname_mus;
-  char *fname_mid;
-  char mus_header[MUS_HEADER_LENGTH];
-
-  if(argc < 3) {
-    printf("Too few arguments\n");
-    exit(EXIT_FAILURE);
-  }
-
-  arg_mask = args_parse(argc, argv, &fname_mus, &fname_mid, &tpqn);
-
-  if(!fname_mus) {
-    puts("MUS filename invalid\n");
-    exit(EXIT_FAILURE);
-  }
-
-  if(!fname_mid) {
-    puts("MID filename invalid\n");
-    exit(EXIT_FAILURE);
-  }
+  unsigned char byte;
 
   memset(channels, 0x00, sizeof(channels) );
 
   event = 0;
   byte = 0;
   delay = 0;
-  pos = 0;
   prev_chan = 0xFF;
 
-  mus = fopen(fname_mus, "rb");
-
-  if(!mus) {
-    perror(fname_mus);
-    exit(EXIT_FAILURE);
-  }
-
-  buffer_init(&read_buffer, BUFFER_SIZE);
-
-  mread(&read_buffer, mus_header, sizeof(*mus_header), MUS_HEADER_LENGTH, mus);
-
-  if(memcmp(MUS_HEADER_MAGIC, mus_header, MUS_HEADER_LENGTH) ) {
-    printf("Not a MUS file!\n");
-    exit(EXIT_FAILURE);
-  }
-
-  mid = fopen(fname_mid, "wb");
-
-  if(!mid) {
-    perror(fname_mid);
-    exit(EXIT_FAILURE);
-  }
-
-  if(!buffer_init(&write_buffer, BUFFER_SIZE) ) {
-    perror(argv[0]);
-    exit(EXIT_FAILURE);
-  }
-
-  mid_metadata_write(mid, tpqn);
-  mtrk_len_offset = ftell(mid) - MIDI_MTRK_FSZLEN;
-
-  mwrite(&write_buffer, MIDI_TEMPO_MAGIC, 1, MIDI_TEMPO_LENGTH, mid);
-
-  mread(&read_buffer, &mus_len, sizeof(mus_len), 1, mus);
-  mread(&read_buffer, &mus_off, sizeof(mus_off), 1, mus);
-  mread(&read_buffer, &mus_channels, sizeof(mus_channels), 1, mus);
-
-  if(mus_len <= mus_off) {
-    printf("Unexpected end of file\n");
-    exit(EXIT_FAILURE);
-  }
-
-  msetoffset(&read_buffer, mus_off);
+  mwrite(write_buffer, MIDI_TEMPO_MAGIC, 1, MIDI_TEMPO_LENGTH, mid);
 
   for(midi_channel = 0; midi_channel < MIDI_MAX_CHANS; midi_channel++) {
-    mwrite_byte(&write_buffer, 0xB0 | midi_channel, mid);
-    mwrite_byte(&write_buffer, 0x07, mid);
-    mwrite_byte(&write_buffer, 0x7F, mid);
-    mwrite_byte(&write_buffer, 0x00, mid);
+    mwrite_byte(write_buffer, 0xB0 | midi_channel, mid);
+    mwrite_byte(write_buffer, 0x07, mid);
+    mwrite_byte(write_buffer, 0x7F, mid);
+    mwrite_byte(write_buffer, 0x00, mid);
   }
 
-  while(read_buffer.io_count < mus_len + mus_off && event != MUS_UNKNOWN2) {
-    mread_byte(&read_buffer, &byte, mus);
+  while(event != MUS_UNKNOWN2) {
+    mread_byte(read_buffer, &byte, mus);
     delay = mus_msb_set(byte);
     event = mus_event_type(byte);
     mus_channel = mus_event_chan(byte);
@@ -426,7 +385,7 @@ int main(int argc, char **argv)
     channel = channels + midi_channel;
     mus_delay = 0;
 
-    mread_byte(&read_buffer, &args[0], mus);
+    mread_byte(read_buffer, &args[0], mus);
     args[1] = 0xFF;
 
     switch(event) {
@@ -450,7 +409,7 @@ int main(int argc, char **argv)
         channel->dtime[0] = 0;
         break;
       case MUS_NOTE_ON:
-        if(mus_msb_set(args[0]) ) mread_byte(&read_buffer, &args[1], mus);
+        if(mus_msb_set(args[0]) ) mread_byte(read_buffer, &args[1], mus);
         else args[1] = channel->volume;
         args[0] = mus_msb_exclude(args[0]);
         channel->volume = args[1];
@@ -462,11 +421,11 @@ int main(int argc, char **argv)
       case MUS_CTRL_EVENT:
         if(args[0] != 0x00) {
           args[0] = MUS2MID_CTRL_TABLE[args[0]];
-          mread_byte(&read_buffer, &args[1], mus);
+          mread_byte(read_buffer, &args[1], mus);
           args[1] = mus_control_fix(args[1]);
         } else {
           event = MUS_UNKNOWN1;
-          mread_byte(&read_buffer, &args[0], mus);
+          mread_byte(read_buffer, &args[0], mus);
         }
         break;
       default:
@@ -481,7 +440,7 @@ int main(int argc, char **argv)
 
     if(delay) {
       do {
-        mread_byte(&read_buffer, &delay, mus);
+        mread_byte(read_buffer, &delay, mus);
         mus_delay = mus_delay_read(mus_delay, delay);
       } while(mus_msb_set(delay) );
 
@@ -489,18 +448,18 @@ int main(int argc, char **argv)
     }
 
     if(isrunning(channel, arg_mask, prev_chan) ) {
-      mwrite_byte(&write_buffer, channel->event | channel->channel, mid);
+      mwrite_byte(write_buffer, channel->event | channel->channel, mid);
     }
 
-    mwrite_byte(&write_buffer, channel->args[0], mid);
+    mwrite_byte(write_buffer, channel->args[0], mid);
 
     if(channel->args[1] != 0xFF) {
-      mwrite_byte(&write_buffer, channel->args[1], mid);
+      mwrite_byte(write_buffer, channel->args[1], mid);
     }
 
-    int j = 0;
+    j = 0;
     do {
-      mwrite_byte(&write_buffer, channel->dtime[j], mid);
+      mwrite_byte(write_buffer, channel->dtime[j], mid);
     } while(mus_msb_set(channel->dtime[j]) && ++j < MIDI_MAX_VARLEN);
     memset(channel->dtime, 0x00, MIDI_MAX_VARLEN);
 
@@ -508,10 +467,86 @@ int main(int argc, char **argv)
     prev_chan = midi_channel;
   }
 
-  mflush(&write_buffer, mid);
+  return 0;
+}
+
+int main(int argc, char **argv)
+{
+  struct Buffer read_buffer;
+  struct Buffer write_buffer;
+
+  FILE *mus;
+  FILE *mid;
+
+  long mtrk_len_offset;
+
+  uint32_t mtrk_size;
+
+  int arg_mask;
+
+  uint16_t tpqn;
+  uint16_t mus_channels;
+
+  char *fname_mus;
+  char *fname_mid;
+
+  if(argc < 3) {
+    printf("Too few arguments\n");
+    exit(EXIT_FAILURE);
+  }
+
+  arg_mask = args_parse(argc, argv, &fname_mus, &fname_mid, &tpqn);
+
+  if(!fname_mus) {
+    puts("MUS filename invalid\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if(!fname_mid) {
+    puts("MID filename invalid\n");
+    exit(EXIT_FAILURE);
+  }
+
+  mus = fopen(fname_mus, "rb");
+
+  if(!mus) {
+    perror(fname_mus);
+    exit(EXIT_FAILURE);
+  }
+
+  mid = fopen(fname_mid, "wb");
+
+  if(!mid) {
+    perror(fname_mid);
+    exit(EXIT_FAILURE);
+  }
+
+  if(!buffer_init(&read_buffer, BUFFER_SIZE) ) {
+    perror(argv[0]);
+    exit(EXIT_FAILURE);
+  }
+
+  if(!buffer_init(&write_buffer, BUFFER_SIZE) ) {
+    perror(argv[0]);
+    exit(EXIT_FAILURE);
+  }
+
+  mid_metadata_write(mid, tpqn);
+  mtrk_len_offset = ftell(mid) - MIDI_MTRK_FSZLEN;
+
+  mus_validate(mus, &read_buffer);
+  mus_metadata_read(mus, &read_buffer, &mus_channels);
+
+  mus2mid_convert(mid, mus, &read_buffer, &write_buffer, arg_mask, mus_channels);
+
   fseek(mid, mtrk_len_offset, SEEK_SET);
-  pos = htonl(write_buffer.io_count);
-  fwrite(&pos, sizeof(pos), 1, mid);
+  mtrk_size = htonl( (uint32_t)write_buffer.io_count);
+  fwrite(&mtrk_size, sizeof(mtrk_size), 1, mid);
+
+  mflush(&write_buffer, mid);
+
+  buffer_free(&read_buffer);
+  buffer_free(&write_buffer);
 
   fclose(mus);
   fclose(mid);
