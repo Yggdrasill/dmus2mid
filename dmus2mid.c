@@ -210,7 +210,7 @@ size_t mread(struct Buffer *src,
   return bytes;
 }
 
-size_t mread_byte(struct Buffer *src, char *byte, FILE *in)
+size_t mread_byte(struct Buffer *src, unsigned char *byte, FILE *in)
 {
   return mread(src, byte, 1, 1, in);
 }
