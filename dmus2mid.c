@@ -124,7 +124,7 @@ int args_parse(int argc,
         stpqn = strtol(optarg, NULL, 0);
         if(stpqn <= 0 || stpqn > MUS2MID_TPQN_MAX) {
           stpqn = MUS2MID_TPQN_DEFAULT;
-          puts("Ridiculous TPQN, ignoring");
+          fputs("Ridiculous TPQN, ignoring\n", stderr);
         }
         break;
     }
@@ -176,7 +176,7 @@ size_t mread(struct Buffer *src,
   if(size == 0 || nmemb == 0) return 0;
 
   if(nmemb > SIZE_MAX / size || size * nmemb > src->bufsize) {
-    printf("mread(): read too large\n");
+    fputs("mread(): read too large\n", stderr);
     return 0;
   }
 
@@ -247,7 +247,7 @@ size_t mwrite(struct Buffer *dst,
   /* prevent integer overflow and buffer overflow */
 
   if(nmemb > SIZE_MAX / size && size * nmemb > dst->bufsize) {
-    printf("mwrite(): elements too large\n");
+    fputs("mwrite(): elements too large\n", stderr);
     return 0;
   }
 
@@ -314,7 +314,7 @@ int mus_validate(FILE *mus, struct Buffer *read_buffer)
   mread(read_buffer, mus_header, sizeof(*mus_header), MUS_HEADER_LENGTH, mus);
 
   if(memcmp(MUS_HEADER_MAGIC, mus_header, MUS_HEADER_LENGTH) ) {
-    printf("Not a MUS file!\n");
+    fputs("Not a MUS file!\n", stderr);
     exit(EXIT_FAILURE);
   }
 
@@ -331,7 +331,7 @@ int mus_metadata_read(FILE *mus, struct Buffer *read_buffer, uint16_t *mus_chann
   mread(read_buffer, mus_channels, sizeof(mus_channels), 1, mus);
 
   if(mus_len <= mus_off) {
-    printf("Unexpected end of file\n");
+    fputs("Unexpected end of file\n", stderr);
     exit(EXIT_FAILURE);
   }
 
@@ -438,7 +438,7 @@ int mus2mid_convert(FILE *mid,
         break;
 
       default:
-        printf("Unknown event %x\n", event);
+        fprintf(stderr, "Unknown event %x\n", event);
         exit(-1);
     }
 
@@ -500,19 +500,19 @@ int main(int argc, char **argv)
   char *fname_mid;
 
   if(argc < 3) {
-    printf("Too few arguments\n");
+    fputs("Too few arguments\n", stderr);
     exit(EXIT_FAILURE);
   }
 
   arg_mask = args_parse(argc, argv, &fname_mus, &fname_mid, &tpqn);
 
   if(!fname_mus) {
-    puts("MUS filename invalid\n");
+    fputs("MUS filename invalid\n", stderr);
     exit(EXIT_FAILURE);
   }
 
   if(!fname_mid) {
-    puts("MID filename invalid\n");
+    fputs("MID filename invalid\n", stderr);
     exit(EXIT_FAILURE);
   }
 
