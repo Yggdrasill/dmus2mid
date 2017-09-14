@@ -148,10 +148,10 @@ char *buffer_init(struct Buffer *buffer, size_t size)
   return buffer->buffer;
 }
 
-char *buffer_free(struct Buffer *buffer)
+void buffer_free(struct Buffer *buffer)
 {
-  if(!buffer) return NULL;
-  if(!buffer->buffer) return NULL;
+  if(!buffer) return;
+  if(!buffer->buffer) return;
 
   free(buffer->buffer);
 }
