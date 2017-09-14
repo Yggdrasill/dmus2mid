@@ -1,0 +1,46 @@
+dmus2mid - DMX MUS to MID converter
+-----------------------------------
+
+The DMX MUS format is used in quite a few old games, particularly those built on
+top of the DOOM engine. The format is essentially a type 0 MIDI file with some
+space-saving measures implemented. Examples of games that use it are:
+
+ * DOOM
+ * DOOM II
+ * Strife
+ * Heretic
+ * Raptor
+
+Do note that to convert MUS files from Raptor, you have to pass in -t 70 to the
+program. The default behavior is to use 140 ticks per quarter note, because
+Raptor is to my knowledge the only game that does not use 140 ticks per quarter
+note, but rather uses 70 ticks per quarter note.
+
+Usage
+------
+
+./dmus2mid [options] [file.mus] [file.mid]
+
+-h      Print this help text
+-t      Specify ticks per quarter note. Examples:
+        70  - Only Raptor uses this for the DMX MUS format
+        140 - DOOM, Strife, Hexen etc. have 140 TPQN
+-z      Enable zero-velocity NOTE_ON events, may help compression
+-e      Disable zero-velocity NOTE_ON events, disabled by default
+-r      Enable running mode for compression, enabled by default
+-u      Disable running mode for compression, shouldn't be necessary
+
+Licensing
+---------
+
+This program is licensed under the GNU General Public License version 3. You can
+read the full terms of the license in the COPYING file.
+
+There is one notable exception to the license. dmx.txt is **not** licensed under
+the GNU GPLv3 and I did not write this documentation. All credit goes to
+Vladimir Arnost.
+
+Credits
+-------
+
+Vladimir Arnost for writing the DMX MUS documentation.
