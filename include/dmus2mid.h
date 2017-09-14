@@ -27,6 +27,15 @@
  * it, but most software sequencers can't.
  */
 
+#define HELP_TEXT     "-h\tPrint this help text\n" \
+                      "-t\tSpecify ticks per quarter note. Examples:\n" \
+                      "  \t70  - Only Raptor uses this for the DMX MUS format\n" \
+                      "  \t140 - DOOM, Strife, Hexen etc. have 140 TPQN\n" \
+                      "-z\tEnable zero-velocity NOTE_ON events, may help compression\n" \
+                      "-e\tDisable zero-velocity NOTE_ON events, disabled by default\n" \
+                      "-r\tEnable running mode for compression, enabled by default\n" \
+                      "-u\tDisable running mode for compression, shouldn't be necessary"
+
 #define MUS2MID_TPQN_MAX      1000
 #define MUS2MID_TPQN_DEFAULT  140
 

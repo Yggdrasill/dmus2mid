@@ -59,6 +59,13 @@ const unsigned char MUS2MID_CTRL_TABLE[] = {
   MIDC_RSTA
 };
 
+void print_help(char *program_name)
+{
+  printf("%s [options] [file.mus] [file.mid]\n\n%s\n", program_name, HELP_TEXT);
+
+  return;
+}
+
 uint32_t mus2mid_delay_conv(uint32_t mus_delay, unsigned char *dtime)
 {
   size_t i;
@@ -101,8 +108,11 @@ int args_parse(int argc,
 
   mask = DEFAULT_ARGS;
 
-  while( (arg = getopt(argc, argv, "zreuqvt:") ) != -1) {
+  while( (arg = getopt(argc, argv, "hzreuqvt:") ) != -1) {
     switch(arg) {
+      case 'h':
+        print_help(argv[0]);
+        exit(EXIT_SUCCESS);
       case 'r':
         mask |= ARGS_USERUNNING;
         mask &= ~(ARGS_NORUNNING);
@@ -304,6 +314,11 @@ int main(int argc, char **argv)
 
   char *fname_mus;
   char *fname_mid;
+
+  if(argc < 2) {
+    print_help(argv[0]);
+    exit(EXIT_SUCCESS);
+  }
 
   if(argc < 3) {
     fputs("Too few arguments\n", stderr);
