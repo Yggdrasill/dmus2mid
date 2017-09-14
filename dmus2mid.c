@@ -466,6 +466,7 @@ int mus2mid_convert(FILE *mid,
       mwrite_byte(write_buffer, channel->args[1], mid);
     }
 
+    j = 0;
     do {
       mwrite_byte(write_buffer, channel->dtime[j], mid);
     } while(mus_msb_set(channel->dtime[j]) && ++j < MIDI_MAX_VARLEN);
