@@ -183,7 +183,6 @@ size_t mwrite(struct Buffer *dst,
   if(bytes > length - offset) {
     retval = fwrite(buffer, sizeof(*buffer), offset, out);
     retval += fwrite(src, size, nmemb, out);
-    dst->io_count += offset;
     offset = 0;
   } else if(bytes > 1) {
     memcpy(buffer, src, bytes);
@@ -196,6 +195,7 @@ size_t mwrite(struct Buffer *dst,
   }
 
   dst->offset = offset;
+  dst->io_count += bytes;
 
   return retval;
 }
@@ -204,16 +204,11 @@ size_t mwrite_byte(struct Buffer *dst,
                   char byte,
                   FILE *out)
 {
-  size_t retval;
-
-  retval = mwrite(dst, &byte, 1, 1, out);
-
-  return retval;
+  return mwrite(dst, &byte, 1, 1, out);
 }
 
 size_t mflush(struct Buffer *src, FILE *out)
 {
-  src->io_count += src->offset;
   return fwrite(src->buffer, 1, src->offset, out);
 }
 
