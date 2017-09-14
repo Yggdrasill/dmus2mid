@@ -551,11 +551,11 @@ int main(int argc, char **argv)
                   &write_buffer, arg_mask,
                   mus_channels);
 
+  mflush(&write_buffer, mid);
+
   fseek(mid, mtrk_len_offset, SEEK_SET);
   mtrk_size = htonl( (uint32_t)write_buffer.io_count);
   fwrite(&mtrk_size, sizeof(mtrk_size), 1, mid);
-
-  mflush(&write_buffer, mid);
 
   buffer_free(&read_buffer);
   buffer_free(&write_buffer);
