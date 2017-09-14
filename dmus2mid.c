@@ -148,6 +148,14 @@ char *buffer_init(struct Buffer *buffer, size_t size)
   return buffer->buffer;
 }
 
+char *buffer_free(struct Buffer *buffer)
+{
+  if(!buffer) return NULL;
+  if(!buffer->buffer) return NULL;
+
+  free(buffer->buffer);
+}
+
 size_t mwrite(struct Buffer *dst,
               void *src,
               size_t size,
