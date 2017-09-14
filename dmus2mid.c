@@ -12,17 +12,17 @@
 
 #include "dmus2mid.h"
 
-inline unsigned char mus_msb_set(unsigned char byte)
+unsigned char mus_msb_set(unsigned char byte)
 {
   return byte >> 7;
 }
 
-inline unsigned char mus_msb_exclude(unsigned char byte)
+unsigned char mus_msb_exclude(unsigned char byte)
 {
   return byte & 0x7F;
 }
 
-inline uint32_t mus_delay_read(uint32_t delay, unsigned char byte)
+uint32_t mus_delay_read(uint32_t delay, unsigned char byte)
 {
   uint32_t retval;
 
@@ -32,22 +32,22 @@ inline uint32_t mus_delay_read(uint32_t delay, unsigned char byte)
   return retval;
 }
 
-inline unsigned char mus_event_type(unsigned char byte)
+unsigned char mus_event_type(unsigned char byte)
 {
   return byte >> 4 & 0x7;
 }
 
-inline unsigned char mus_event_chan(unsigned char byte)
+unsigned char mus_event_chan(unsigned char byte)
 {
   return byte & 0xF;
 }
 
-inline unsigned char mus_control_fix(unsigned char byte)
+unsigned char mus_control_fix(unsigned char byte)
 {
   return byte & 0x80 ? 0x7F : byte;
 }
 
-inline uint32_t mus2mid_delay_conv(uint32_t mus_delay, unsigned char *dtime)
+uint32_t mus2mid_delay_conv(uint32_t mus_delay, unsigned char *dtime)
 {
   size_t i;
   uint32_t midi_delay;
@@ -68,7 +68,7 @@ inline uint32_t mus2mid_delay_conv(uint32_t mus_delay, unsigned char *dtime)
   return midi_delay;
 }
 
-inline unsigned char mid_channel_fix(unsigned char byte)
+unsigned char mid_channel_fix(unsigned char byte)
 {
   return byte == 0x0F ? 0x09 : byte == 0x09 ? 0x0F : byte;
 }
