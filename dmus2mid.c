@@ -288,6 +288,23 @@ size_t mflush(struct Buffer *src, FILE *out)
   return fwrite(src->buffer, 1, src->offset, out);
 }
 
+size_t mid_metadata_write(FILE *mid, uint16_t tpqn)
+{
+  size_t retval;
+
+  retval = fwrite(MIDI_HEADER_MAGIC, 1, MIDI_HEADER_LENGTH, mid);
+  retval += fwrite(MIDI_HEADER_DATA, 1, MIDI_HDATA_LENGTH, mid);
+
+  tpqn = htons(tpqn);
+  retval += fwrite(&tpqn, sizeof(tpqn), 1, mid);
+
+  retval += fwrite(MIDI_MTRK_MAGIC, 1, MIDI_MTRK_LENGTH, mid);
+  retval += fwrite(MIDI_MTRK_FILESZ, 1, MIDI_MTRK_FSZLEN, mid);
+
+  return retval;
+}
+
+
 int main(int argc, char **argv)
 {
   struct MIDIchan channels[MIDI_MAX_CHANS];
@@ -377,20 +394,10 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  fwrite(MIDI_HEADER_MAGIC, 1, sizeof(MIDI_HEADER_MAGIC) - 1, mid);
-  fwrite(MIDI_HEADER_DATA, 1, sizeof(MIDI_HEADER_DATA) - 1, mid);
+  mid_metadata_write(mid, tpqn);
+  mtrk_len_offset = ftell(mid) - MIDI_MTRK_FSZLEN;
 
-  tpqn = htons(tpqn);
-
-  fwrite(&tpqn, sizeof(tpqn), 1, mid);
-  fwrite(MIDI_MTRK_MAGIC, 1, sizeof(MIDI_MTRK_MAGIC) - 1, mid);
-
-  mtrk_len_offset = ftell(mid);
-
-  fwrite(MIDI_MTRK_LENGTH, 1, sizeof(MIDI_MTRK_LENGTH) - 1, mid);
-
-  mwrite(&write_buffer, MIDI_TEMPO_MAGIC, 1, sizeof(MIDI_TEMPO_MAGIC) - 1, mid);
-  mwrite_byte(&write_buffer, 0x00, mid);
+  mwrite(&write_buffer, MIDI_TEMPO_MAGIC, 1, MIDI_TEMPO_LENGTH, mid);
 
   mread(&read_buffer, &mus_len, sizeof(mus_len), 1, mus);
   mread(&read_buffer, &mus_off, sizeof(mus_off), 1, mus);

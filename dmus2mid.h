@@ -16,11 +16,16 @@
 #define MIDI_HEADER_MAGIC "MThd\x00\x00\x00\x06"
 #define MIDI_HEADER_DATA  "\x00\x00\x00\x01"
 #define MIDI_MTRK_MAGIC   "\x4d\x54\x72\x6b"
-#define MIDI_MTRK_LENGTH  "\x00\x00\x00\x00"
+#define MIDI_MTRK_FILESZ  "\x00\x00\x00\x00"
 #define MIDI_KEYSIG_MAGIC "\x00\xFF\x59\x02\x00\x00"
-#define MIDI_TEMPO_MAGIC  "\x00\xFF\x51\x03\x0F\x42\x40"
+#define MIDI_TEMPO_MAGIC  "\x00\xFF\x51\x03\x0F\x42\x40\x00"
 
-#define MUS_HEADER_LENGTH sizeof(MUS_HEADER_MAGIC) - 1
+#define MUS_HEADER_LENGTH   (sizeof(MUS_HEADER_MAGIC) - 1)
+#define MIDI_HEADER_LENGTH  (sizeof(MIDI_HEADER_MAGIC) - 1)
+#define MIDI_HDATA_LENGTH   (sizeof(MIDI_HEADER_DATA) - 1)
+#define MIDI_MTRK_LENGTH    (sizeof(MIDI_MTRK_MAGIC) - 1)
+#define MIDI_MTRK_FSZLEN    (sizeof(MIDI_MTRK_FILESZ) - 1)
+#define MIDI_TEMPO_LENGTH   (sizeof(MIDI_TEMPO_MAGIC) - 1)
 
 #define MUS_SYSTEM_MIN    10
 #define MUS_SYSTEM_MAX    15
