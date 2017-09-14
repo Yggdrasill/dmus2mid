@@ -215,8 +215,10 @@ int main(int argc, char **argv)
 {
   struct stat st;
 
-  struct MIDIchan chans[16] = {0};
+  struct MIDIchan channels[MIDI_MAX_CHANS];
   struct Buffer write_buffer;
+
+  struct MIDIchan *channel;
 
   FILE *mus;
   FILE *mid;
@@ -239,8 +241,8 @@ int main(int argc, char **argv)
 
   unsigned char delay;
   unsigned char event;
-  unsigned char channel;
-  unsigned char midi_chan;
+  unsigned char mus_channel;
+  unsigned char midi_channel;
   unsigned char prev_chan;
   unsigned char args[2];
 
@@ -272,6 +274,8 @@ int main(int argc, char **argv)
   }
 
   size = st.st_size;
+  memset(channels, 0x00, sizeof(channels) );
+
   byte = 0;
   delay = 0;
   pos = 0;
@@ -328,8 +332,8 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  for(midi_chan = 0; midi_chan < MIDI_MAX_CHANS; midi_chan++) {
-    mwrite_byte(&write_buffer, 0xB0 | midi_chan, mid);
+  for(midi_channel = 0; midi_channel < MIDI_MAX_CHANS; midi_channel++) {
+    mwrite_byte(&write_buffer, 0xB0 | midi_channel, mid);
     mwrite_byte(&write_buffer, 0x07, mid);
     mwrite_byte(&write_buffer, 0x7F, mid);
     mwrite_byte(&write_buffer, 0x00, mid);
@@ -339,8 +343,9 @@ int main(int argc, char **argv)
     byte = read_buffer[i];
     delay = mus_msb_set(byte);
     event = mus_event_type(byte);
-    channel = mus_event_chan(byte);
-    midi_chan = mid_channel_fix(channel);
+    mus_channel = mus_event_chan(byte);
+    midi_channel = mid_channel_fix(mus_channel);
+    channel = channels + midi_channel;
     mus_delay = 0;
 
     args[0] = read_buffer[++i];
@@ -361,16 +366,16 @@ int main(int argc, char **argv)
         break;
       case MUS_FINISH:
         event = MUS_UNKNOWN2;
-        midi_chan = 0;
+        midi_channel = 0;
         args[0] = 0x2F;
         delay = 0;
-        chans[midi_chan].dtime[0] = 0;
+        channel->dtime[0] = 0;
         break;
       case MUS_NOTE_ON:
         if(mus_msb_set(args[0]) ) args[1] = read_buffer[++i];
-        else args[1] = chans[midi_chan].volume;
+        else args[1] = channel->volume;
         args[0] = mus_msb_exclude(args[0]);
-        chans[midi_chan].volume = args[1];
+        channel->volume = args[1];
         break;
       case MUS_SYS_EVENT:
         args[0] = MUS2MID_CTRL_TABLE[args[0]];
@@ -391,10 +396,10 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    chans[midi_chan].event = MUS2MID_EVENT_TABLE[event];
-    chans[midi_chan].channel = midi_chan;
-    chans[midi_chan].args[0] = args[0];
-    chans[midi_chan].args[1] = args[1];
+    channel->event = MUS2MID_EVENT_TABLE[event];
+    channel->channel = midi_channel;
+    channel->args[0] = args[0];
+    channel->args[1] = args[1];
 
     if(delay) {
       do {
@@ -402,29 +407,27 @@ int main(int argc, char **argv)
         mus_delay = mus_delay_read(mus_delay, delay);
       } while(mus_msb_set(delay) );
 
-      mus2mid_delay_conv(mus_delay, chans[midi_chan].dtime);
+      mus2mid_delay_conv(mus_delay, channel->dtime);
     }
 
-    if(isrunning) {
-      mwrite_byte(&write_buffer,
-                  chans[midi_chan].event | chans[midi_chan].channel,
-                  mid);
+    if(isrunning(channel, arg_mask, prev_chan) ) {
+      mwrite_byte(&write_buffer, channel->event | channel->channel, mid);
     }
 
-    mwrite_byte(&write_buffer, chans[midi_chan].args[0], mid);
+    mwrite_byte(&write_buffer, channel->args[0], mid);
 
-    if(chans[midi_chan].args[1] != 0xFF) {
-      mwrite_byte(&write_buffer, chans[midi_chan].args[1], mid);
+    if(channel->args[1] != 0xFF) {
+      mwrite_byte(&write_buffer, channel->args[1], mid);
     }
 
     int j = 0;
     do {
-      mwrite_byte(&write_buffer, chans[midi_chan].dtime[j], mid);
-    } while(mus_msb_set(chans[midi_chan].dtime[j]) && ++j < MIDI_MAX_VARLEN);
-    memset(chans[midi_chan].dtime, 0x00, MIDI_MAX_VARLEN);
+      mwrite_byte(&write_buffer, channel->dtime[j], mid);
+    } while(mus_msb_set(channel->dtime[j]) && ++j < MIDI_MAX_VARLEN);
+    memset(channel->dtime, 0x00, MIDI_MAX_VARLEN);
 
-    chans[midi_chan].prev_event = chans[midi_chan].event;
-    prev_chan = midi_chan;
+    channel->prev_event = channel->event;
+    prev_chan = midi_channel;
   }
 
   mflush(&write_buffer, mid);
