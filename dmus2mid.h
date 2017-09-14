@@ -20,6 +20,8 @@
 #define MIDI_KEYSIG_MAGIC "\x00\xFF\x59\x02\x00\x00"
 #define MIDI_TEMPO_MAGIC  "\x00\xFF\x51\x03\x0F\x42\x40"
 
+#define MUS_HEADER_LENGTH sizeof(MUS_HEADER_MAGIC) - 1
+
 #define MUS_SYSTEM_MIN    10
 #define MUS_SYSTEM_MAX    15
 

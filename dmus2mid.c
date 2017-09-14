@@ -322,7 +322,7 @@ int main(int argc, char **argv)
 
   char *fname_mus;
   char *fname_mid;
-  char mus_header[4];
+  char mus_header[MUS_HEADER_LENGTH];
 
   if(argc < 3) {
     printf("Too few arguments\n");
@@ -358,9 +358,9 @@ int main(int argc, char **argv)
 
   buffer_init(&read_buffer, BUFFER_SIZE);
 
-  mread(&read_buffer, mus_header, sizeof(*mus_header), sizeof(mus_header), mus);
+  mread(&read_buffer, mus_header, sizeof(*mus_header), MUS_HEADER_LENGTH, mus);
 
-  if(memcmp(MUS_HEADER_MAGIC, mus_header, sizeof(MUS_HEADER_MAGIC) - 1) ) {
+  if(memcmp(MUS_HEADER_MAGIC, mus_header, MUS_HEADER_LENGTH) ) {
     printf("Not a MUS file!\n");
     exit(EXIT_FAILURE);
   }
