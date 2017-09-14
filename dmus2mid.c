@@ -139,6 +139,7 @@ char *buffer_init(struct Buffer *buffer, size_t size)
 {
   if(!buffer) return NULL;
 
+  buffer->bufsize = size;
   buffer->length = size;
   buffer->offset = 0;
   buffer->io_count = 0;
@@ -154,10 +155,9 @@ size_t mwrite(struct Buffer *dst,
               FILE *out)
 {
   size_t retval;
-  size_t length;
+  size_t bufsize;
   size_t offset;
   size_t bytes;
-  size_t i;
 
   char *buffer;
 
@@ -166,20 +166,20 @@ size_t mwrite(struct Buffer *dst,
 
   /* prevent integer overflow and buffer overflow */
 
-  if(nmemb > SIZE_MAX / size && size * nmemb > dst->length) {
+  if(nmemb > SIZE_MAX / size && size * nmemb > dst->bufsize) {
     printf("mwrite(): elements too large\n");
     return 0;
   }
 
   retval  = 0;
-  length  = dst->length;
+  bufsize  = dst->bufsize;
   offset  = dst->offset;
   buffer  = dst->buffer;
   bytes   = size * nmemb;
 
   if(!buffer) return 0;
 
-  if(bytes > length - offset) {
+  if(bytes > bufsize - offset) {
     retval = fwrite(buffer, sizeof(*buffer), offset, out);
     retval += fwrite(src, size, nmemb, out);
     offset = 0;

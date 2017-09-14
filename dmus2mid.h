@@ -107,6 +107,7 @@ enum MUSC {
 };
 
 struct Buffer {
+  size_t bufsize;
   size_t length;
   size_t offset;
   size_t io_count;
