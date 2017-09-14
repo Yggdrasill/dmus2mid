@@ -290,8 +290,6 @@ size_t mflush(struct Buffer *src, FILE *out)
 
 int main(int argc, char **argv)
 {
-  struct stat st;
-
   struct MIDIchan channels[MIDI_MAX_CHANS];
   struct Buffer write_buffer;
   struct Buffer read_buffer;
@@ -300,8 +298,6 @@ int main(int argc, char **argv)
 
   FILE *mus;
   FILE *mid;
-
-  size_t size;
 
   long mtrk_len_offset;
 
@@ -345,12 +341,6 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  if(stat(fname_mus, &st) ) {
-    perror(fname_mus);
-    exit(EXIT_FAILURE);
-  }
-
-  size = st.st_size;
   memset(channels, 0x00, sizeof(channels) );
 
   event = 0;
