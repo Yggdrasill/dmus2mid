@@ -79,8 +79,11 @@ int isrunning(struct MIDIchan *chan, int arg_mask, unsigned char prev_chan)
          && (chan->event != chan->prev_event || chan->channel != prev_chan);
 }
 
-int args_parse(int argc, char **argv, char **fname_mus,
-               char **fname_mid, uint16_t *tpqn)
+int args_parse(int argc,
+              char **argv,
+              char **fname_mus,
+              char **fname_mid,
+              uint16_t *tpqn)
 {
   int arg;
   int mask;
@@ -397,10 +400,12 @@ int mus2mid_convert(FILE *mid,
           args[1] = 0x40;
         }
         break;
+
       case MUS_PITCH_BEND:
         args[1] = args[0] >> 1;
         args[0] = (args[0] & 1) << 6;
         break;
+
       case MUS_FINISH:
         event = MUS_UNKNOWN2;
         midi_channel = 0;
@@ -408,16 +413,19 @@ int mus2mid_convert(FILE *mid,
         delay = 0;
         channel->dtime[0] = 0;
         break;
+
       case MUS_NOTE_ON:
         if(mus_msb_set(args[0]) ) mread_byte(read_buffer, &args[1], mus);
         else args[1] = channel->volume;
         args[0] = mus_msb_exclude(args[0]);
         channel->volume = args[1];
         break;
+
       case MUS_SYS_EVENT:
         args[0] = MUS2MID_CTRL_TABLE[args[0]];
         args[1] = args[0] == MIDC_MONO ? mus_channels : 0x00;
         break;
+
       case MUS_CTRL_EVENT:
         if(args[0] != 0x00) {
           args[0] = MUS2MID_CTRL_TABLE[args[0]];
@@ -428,6 +436,7 @@ int mus2mid_convert(FILE *mid,
           mread_byte(read_buffer, &args[0], mus);
         }
         break;
+
       default:
         printf("Unknown event %x\n", event);
         exit(-1);
@@ -460,6 +469,7 @@ int mus2mid_convert(FILE *mid,
     do {
       mwrite_byte(write_buffer, channel->dtime[j], mid);
     } while(mus_msb_set(channel->dtime[j]) && ++j < MIDI_MAX_VARLEN);
+
     memset(channel->dtime, 0x00, MIDI_MAX_VARLEN);
 
     channel->prev_event = channel->event;
@@ -536,7 +546,9 @@ int main(int argc, char **argv)
   mus_validate(mus, &read_buffer);
   mus_metadata_read(mus, &read_buffer, &mus_channels);
 
-  mus2mid_convert(mid, mus, &read_buffer, &write_buffer, arg_mask, mus_channels);
+  mus2mid_convert(mid, mus, &read_buffer,
+                  &write_buffer, arg_mask,
+                  mus_channels);
 
   fseek(mid, mtrk_len_offset, SEEK_SET);
   mtrk_size = htonl( (uint32_t)write_buffer.io_count);
