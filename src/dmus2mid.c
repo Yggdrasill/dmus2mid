@@ -1,51 +1,44 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 
-#include <arpa/inet.h>
+#include "../include/dmus2mid.h"
+#include "../include/memio.h"
+#include "../include/mid.h"
+#include "../include/mus.h"
 
-#include "dmus2mid.h"
+const unsigned char MUS2MID_EVENT_TABLE[] = {
+  MIDI_NOTE_OFF,
+  MIDI_NOTE_ON,
+  MIDI_PITCH_BEND,
+  MIDI_CTRL_EVENT,
+  MIDI_CTRL_EVENT,
+  MIDI_INSTR_CHNG,
+  MIDI_END_TRACK,
+  MIDI_META
+};
 
-unsigned char mus_msb_set(unsigned char byte)
-{
-  return byte >> 7;
-}
-
-unsigned char mus_msb_exclude(unsigned char byte)
-{
-  return byte & 0x7F;
-}
-
-uint32_t mus_delay_read(uint32_t delay, unsigned char byte)
-{
-  uint32_t retval;
-
-  byte = byte & 0x7F;
-  retval = (delay << 7) + byte;
-
-  return retval;
-}
-
-unsigned char mus_event_type(unsigned char byte)
-{
-  return byte >> 4 & 0x7;
-}
-
-unsigned char mus_event_chan(unsigned char byte)
-{
-  return byte & 0xF;
-}
-
-unsigned char mus_control_fix(unsigned char byte)
-{
-  return byte & 0x80 ? 0x7F : byte;
-}
+const unsigned char MUS2MID_CTRL_TABLE[] = {
+  0x00,
+  MIDC_BANK_SELECT,
+  MIDC_MOD_POT,
+  MIDC_VOLUME,
+  MIDC_PAN_POT,
+  MIDC_EXPR_POT,
+  MIDC_REVERB,
+  MIDC_CHORUS,
+  MIDC_HOLD,
+  MIDC_SOFTP,
+  MIDC_NOSND,
+  MIDC_NONOTE,
+  MIDC_MONO,
+  MIDC_POLY,
+  MIDC_RSTA
+};
 
 uint32_t mus2mid_delay_conv(uint32_t mus_delay, unsigned char *dtime)
 {
@@ -66,11 +59,6 @@ uint32_t mus2mid_delay_conv(uint32_t mus_delay, unsigned char *dtime)
   }
 
   return midi_delay;
-}
-
-unsigned char mid_channel_fix(unsigned char byte)
-{
-  return byte == 0x0F ? 0x09 : byte == 0x09 ? 0x0F : byte;
 }
 
 int isrunning(struct MIDIchan *chan, int arg_mask, unsigned char prev_chan)
@@ -136,208 +124,6 @@ int args_parse(int argc,
   *fname_mid = argv[optind + 1];
 
   return mask;
-}
-
-char *buffer_init(struct Buffer *buffer, size_t size)
-{
-  if(!buffer) return NULL;
-
-  buffer->bufsize = size;
-  buffer->length = size;
-  buffer->offset = 0;
-  buffer->io_count = 0;
-  buffer->buffer = malloc(size);
-
-  return buffer->buffer;
-}
-
-void buffer_free(struct Buffer *buffer)
-{
-  if(!buffer) return;
-  if(!buffer->buffer) return;
-
-  free(buffer->buffer);
-}
-
-size_t mread(struct Buffer *src,
-            void *dst,
-            size_t size,
-            size_t nmemb,
-            FILE *in)
-{
-  size_t bufsize;
-  size_t length;
-  size_t offset;
-  size_t bytes;
-
-  char *buffer;
-
-  if(!src || !dst || !in) return 0;
-  if(size == 0 || nmemb == 0) return 0;
-
-  if(nmemb > SIZE_MAX / size || size * nmemb > src->bufsize) {
-    fputs("mread(): read too large\n", stderr);
-    return 0;
-  }
-
-  bufsize = src->bufsize;
-  length  = src->length;
-  offset  = src->offset;
-  buffer  = src->buffer;
-  bytes   = size * nmemb;
-
-  if(!buffer) return 0;
-  if(!length) return 0;
-
-  if(!src->io_count) {
-    length = fread(buffer, sizeof(*buffer), bufsize, in);
-    offset = 0;
-  }
-  else if(bytes >= bufsize - offset) {
-    memmove(buffer, buffer + offset, bufsize - offset);
-    offset = bufsize - offset;
-    length = fread(buffer + offset, sizeof(*buffer), bufsize - offset, in);
-    offset = 0;
-  }
-
-  if(bytes == 1) {
-    *(char *)dst = buffer[offset];
-  } else {
-    memcpy(dst, buffer + offset, bytes);
-  }
-
-  src->length = length;
-  src->io_count += bytes;
-  src->offset = offset + bytes;
-
-  return bytes;
-}
-
-size_t mread_byte(struct Buffer *src, unsigned char *byte, FILE *in)
-{
-  return mread(src, byte, 1, 1, in);
-}
-
-int msetoffset(struct Buffer *src, size_t offset)
-{
-  if(!src) return -1;
-  if(offset > src->bufsize) return -2;
-
-  src->offset = offset;
-
-  return 0;
-}
-
-size_t mwrite(struct Buffer *dst,
-              void *src,
-              size_t size,
-              size_t nmemb,
-              FILE *out)
-{
-  size_t retval;
-  size_t bufsize;
-  size_t offset;
-  size_t bytes;
-
-  char *buffer;
-
-  if(!src || !out) return 0;
-  if(size == 0 || nmemb == 0) return 0;
-
-  /* prevent integer overflow and buffer overflow */
-
-  if(nmemb > SIZE_MAX / size && size * nmemb > dst->bufsize) {
-    fputs("mwrite(): elements too large\n", stderr);
-    return 0;
-  }
-
-  retval  = 0;
-  bufsize  = dst->bufsize;
-  offset  = dst->offset;
-  buffer  = dst->buffer;
-  bytes   = size * nmemb;
-
-  if(!buffer) return 0;
-
-  if(bytes > bufsize - offset) {
-    retval = fwrite(buffer, sizeof(*buffer), offset, out);
-    retval += fwrite(src, size, nmemb, out);
-    offset = 0;
-  } else if(bytes > 1) {
-    memcpy(buffer, src, bytes);
-    retval = bytes;
-    offset += bytes;
-  } else if(bytes < 2) {
-    buffer[offset] = *(char *)src;
-    retval = 1;
-    offset++;
-  }
-
-  dst->offset = offset;
-  dst->io_count += bytes;
-
-  return retval;
-}
-
-size_t mwrite_byte(struct Buffer *dst,
-                  char byte,
-                  FILE *out)
-{
-  return mwrite(dst, &byte, 1, 1, out);
-}
-
-size_t mflush(struct Buffer *src, FILE *out)
-{
-  return fwrite(src->buffer, 1, src->offset, out);
-}
-
-size_t mid_metadata_write(FILE *mid, uint16_t tpqn)
-{
-  size_t retval;
-
-  retval = fwrite(MIDI_HEADER_MAGIC, 1, MIDI_HEADER_LENGTH, mid);
-  retval += fwrite(MIDI_HEADER_DATA, 1, MIDI_HDATA_LENGTH, mid);
-
-  tpqn = htons(tpqn);
-  retval += fwrite(&tpqn, sizeof(tpqn), 1, mid);
-
-  retval += fwrite(MIDI_MTRK_MAGIC, 1, MIDI_MTRK_LENGTH, mid);
-  retval += fwrite(MIDI_MTRK_FILESZ, 1, MIDI_MTRK_FSZLEN, mid);
-
-  return retval;
-}
-
-int mus_validate(FILE *mus, struct Buffer *read_buffer)
-{
-  char mus_header[MUS_HEADER_LENGTH];
-
-  mread(read_buffer, mus_header, sizeof(*mus_header), MUS_HEADER_LENGTH, mus);
-
-  if(memcmp(MUS_HEADER_MAGIC, mus_header, MUS_HEADER_LENGTH) ) {
-    fputs("Not a MUS file!\n", stderr);
-    exit(EXIT_FAILURE);
-  }
-
-  return 0;
-}
-
-int mus_metadata_read(FILE *mus, struct Buffer *read_buffer, uint16_t *mus_channels)
-{
-  uint16_t mus_len;
-  uint16_t mus_off;
-
-  mread(read_buffer, &mus_len, sizeof(mus_len), 1, mus);
-  mread(read_buffer, &mus_off, sizeof(mus_off), 1, mus);
-  mread(read_buffer, mus_channels, sizeof(mus_channels), 1, mus);
-
-  if(mus_len <= mus_off) {
-    fputs("Unexpected end of file\n", stderr);
-    exit(EXIT_FAILURE);
-  }
-
-  msetoffset(read_buffer, mus_off);
-
-  return 0;
 }
 
 int mus2mid_convert(FILE *mid,

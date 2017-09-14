@@ -11,37 +11,8 @@
 #define MUS2MID_TPQN_MAX      1000
 #define MUS2MID_TPQN_DEFAULT  140
 
-#define MUS_HEADER_MAGIC  "MUS\x1A"
-
-#define MIDI_HEADER_MAGIC "MThd\x00\x00\x00\x06"
-#define MIDI_HEADER_DATA  "\x00\x00\x00\x01"
-#define MIDI_MTRK_MAGIC   "\x4d\x54\x72\x6b"
-#define MIDI_MTRK_FILESZ  "\x00\x00\x00\x00"
-#define MIDI_KEYSIG_MAGIC "\x00\xFF\x59\x02\x00\x00"
-#define MIDI_TEMPO_MAGIC  "\x00\xFF\x51\x03\x0F\x42\x40\x00"
-
-#define MUS_HEADER_LENGTH   (sizeof(MUS_HEADER_MAGIC) - 1)
-#define MIDI_HEADER_LENGTH  (sizeof(MIDI_HEADER_MAGIC) - 1)
-#define MIDI_HDATA_LENGTH   (sizeof(MIDI_HEADER_DATA) - 1)
-#define MIDI_MTRK_LENGTH    (sizeof(MIDI_MTRK_MAGIC) - 1)
-#define MIDI_MTRK_FSZLEN    (sizeof(MIDI_MTRK_FILESZ) - 1)
-#define MIDI_TEMPO_LENGTH   (sizeof(MIDI_TEMPO_MAGIC) - 1)
-
-#define MUS_SYSTEM_MIN    10
-#define MUS_SYSTEM_MAX    15
-
-#define MIDI_SIZE_PITCH   2
-#define MIDI_MAX_VARLEN   4
-#define MIDI_MAX_CHANS    16
-
 #define BUFFER_SIZE       65536
 
-unsigned char mus_msb_set(unsigned char);
-unsigned char mus_msb_exclude(unsigned char);
-uint32_t mus_delay_read(uint32_t, unsigned char);
-unsigned char mus_event_type(unsigned char);
-unsigned char mus_event_chan(unsigned char);
-unsigned char mus_control_fix(unsigned char);
 uint32_t mus2mid_delay_conv(uint32_t, unsigned char *);
 unsigned char mid_channel_fix(unsigned char);
 
@@ -113,51 +84,7 @@ enum MUSC {
   MUSC_RESET_CTRLS  = 0x0E
 };
 
-struct Buffer {
-  size_t bufsize;
-  size_t length;
-  size_t offset;
-  size_t io_count;
-  char *buffer;
-};
-
-struct MIDIchan {
-  unsigned char event;
-  unsigned char prev_event;
-  unsigned char channel;
-  unsigned char volume;
-  unsigned char ctrl;
-  unsigned char args[2];
-  unsigned char dtime[MIDI_MAX_VARLEN];
-};
-
-const unsigned char MUS2MID_EVENT_TABLE[] = {
-  MIDI_NOTE_OFF,
-  MIDI_NOTE_ON,
-  MIDI_PITCH_BEND,
-  MIDI_CTRL_EVENT,
-  MIDI_CTRL_EVENT,
-  MIDI_INSTR_CHNG,
-  MIDI_END_TRACK,
-  MIDI_META
-};
-
-const char MUS2MID_CTRL_TABLE[] = {
-  0x00,
-  MIDC_BANK_SELECT,
-  MIDC_MOD_POT,
-  MIDC_VOLUME,
-  MIDC_PAN_POT,
-  MIDC_EXPR_POT,
-  MIDC_REVERB,
-  MIDC_CHORUS,
-  MIDC_HOLD,
-  MIDC_SOFTP,
-  MIDC_NOSND,
-  MIDC_NONOTE,
-  MIDC_MONO,
-  MIDC_POLY,
-  MIDC_RSTA
-};
+extern const unsigned char MUS2MID_EVENT_TABLE[];
+extern const unsigned char MUS2MID_CTRL_TABLE[];
 
 #endif
