@@ -26,12 +26,14 @@
 #define MIDI_MTRK_FILESZ  "\x00\x00\x00\x00"
 #define MIDI_KEYSIG_MAGIC "\x00\xFF\x59\x02\x00\x00"
 #define MIDI_TEMPO_MAGIC  "\x00\xFF\x51\x03\x0F\x42\x40\x00"
+#define MIDI_END_OF_TRACK "\xFF\x2F\x00"
 
 #define MIDI_HEADER_LENGTH  (sizeof(MIDI_HEADER_MAGIC) - 1)
 #define MIDI_HDATA_LENGTH   (sizeof(MIDI_HEADER_DATA) - 1)
 #define MIDI_MTRK_LENGTH    (sizeof(MIDI_MTRK_MAGIC) - 1)
 #define MIDI_MTRK_FSZLEN    (sizeof(MIDI_MTRK_FILESZ) - 1)
 #define MIDI_TEMPO_LENGTH   (sizeof(MIDI_TEMPO_MAGIC) - 1)
+#define MIDI_EOT_LENGTH     (sizeof(MIDI_END_OF_TRACK) - 1)
 
 #define MIDI_SIZE_PITCH   2
 #define MIDI_MAX_VARLEN   4
