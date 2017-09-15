@@ -135,7 +135,7 @@ size_t mwrite(struct Buffer *dst,
     retval += fwrite(src, size, nmemb, out);
     offset = 0;
   } else if(bytes > 1) {
-    memcpy(buffer, src, bytes);
+    memcpy(buffer + offset, src, bytes);
     retval = bytes;
     offset += bytes;
   } else if(bytes < 2) {
