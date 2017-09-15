@@ -283,6 +283,13 @@ int mus2mid_convert(FILE *mid,
     prev_chan = midi_channel;
   }
 
+  /* all notes off */
+
+  mwrite_byte(write_buffer, MIDI_CTRL_EVENT, mid);
+  mwrite_byte(write_buffer, MIDC_NONOTE, mid);
+  mwrite_byte(write_buffer, 0x00, mid);
+  mwrite_byte(write_buffer, 0x00, mid);
+
   mwrite(write_buffer, MIDI_END_OF_TRACK, 1, MIDI_EOT_LENGTH, mid);
 
   return 0;
