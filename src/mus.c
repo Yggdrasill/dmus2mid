@@ -83,7 +83,7 @@ int mus_metadata_read(FILE *mus,
 
   mread(read_buffer, &mus_len, sizeof(mus_len), 1, mus);
   mread(read_buffer, &mus_off, sizeof(mus_off), 1, mus);
-  mread(read_buffer, mus_channels, sizeof(mus_channels), 1, mus);
+  mread(read_buffer, mus_channels, sizeof(*mus_channels), 1, mus);
 
   if(mus_len <= mus_off) {
     fputs("Unexpected end of file\n", stderr);
