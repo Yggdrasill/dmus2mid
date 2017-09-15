@@ -194,10 +194,9 @@ int mus2mid_convert(FILE *mid,
     mwrite_byte(write_buffer, 0x00, mid);
   }
 
-  while(event != MUS_UNKNOWN2) {
-    mread_byte(read_buffer, &byte, mus);
+  while(mread_byte(read_buffer, &byte, mus)
+        && (event = mus_event_type(byte) ) != MUS_FINISH) {
     delay = mus_msb_set(byte);
-    event = mus_event_type(byte);
     mus_channel = mus_event_chan(byte);
     midi_channel = mid_channel_fix(mus_channel);
     channel = channels + midi_channel;
@@ -219,14 +218,6 @@ int mus2mid_convert(FILE *mid,
       case MUS_PITCH_BEND:
         args[1] = args[0] >> 1;
         args[0] = (args[0] & 1) << 6;
-        break;
-
-      case MUS_FINISH:
-        event = MUS_UNKNOWN2;
-        midi_channel = 0;
-        args[0] = 0x2F;
-        delay = 0;
-        channel->dtime[0] = 0;
         break;
 
       case MUS_NOTE_ON:
@@ -291,6 +282,8 @@ int mus2mid_convert(FILE *mid,
     channel->prev_event = channel->event;
     prev_chan = midi_channel;
   }
+
+  mwrite(write_buffer, MIDI_END_OF_TRACK, 1, MIDI_EOT_LENGTH, mid);
 
   return 0;
 }
