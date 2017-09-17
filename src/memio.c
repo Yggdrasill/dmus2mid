@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <limits.h>
 
 #include "../include/memio.h"
 
