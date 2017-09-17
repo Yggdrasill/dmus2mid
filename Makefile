@@ -4,3 +4,4 @@ all:
 
 clean:
 	rm dmus2mid
+	src/*.o
