@@ -44,6 +44,7 @@ void buffer_free(struct Buffer *buffer)
   if(!buffer->buffer) return;
 
   free(buffer->buffer);
+  buffer->buffer = NULL;
 }
 
 size_t mread(struct Buffer *src,
