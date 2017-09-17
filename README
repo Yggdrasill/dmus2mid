@@ -16,10 +16,16 @@ program. The default behavior is to use 140 ticks per quarter note, because
 Raptor is to my knowledge the only game that does not use 140 ticks per quarter
 note, but rather uses 70 ticks per quarter note.
 
+Build
+-----
+
+Fairly standard, just run 'make' in the terminal. There will be an executable
+file in the same directory named 'dmus2mid'.
+
 Usage
 ------
 
-./dmus2mid [options] [file.mus] [file.mid]
+dmus2mid [options] [file.mus] [file.mid]
 
 -h      Print this help text
 -t      Specify ticks per quarter note. Examples:
@@ -29,6 +35,9 @@ Usage
 -e      Disable zero-velocity NOTE_ON events, disabled by default
 -r      Enable running mode for compression, enabled by default
 -u      Disable running mode for compression, shouldn't be necessary
+
+If conflicting options are passed to the program (example: -r -u), the latter
+conflicting argument takes precedence.
 
 Licensing
 ---------
@@ -43,4 +52,4 @@ Vladimir Arnost.
 Credits
 -------
 
-Vladimir Arnost for writing the DMX MUS documentation provides in dmx.txt.
+Vladimir Arnost for writing the DMX MUS documentation provided in dmx.txt.
