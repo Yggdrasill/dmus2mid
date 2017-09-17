@@ -53,6 +53,7 @@ size_t mread(struct Buffer *src,
             size_t nmemb,
             FILE *in)
 {
+  size_t retval;
   size_t bufsize;
   size_t length;
   size_t offset;
@@ -68,6 +69,7 @@ size_t mread(struct Buffer *src,
     return 0;
   }
 
+  retval  = 0;
   bufsize = src->bufsize;
   length  = src->length;
   offset  = src->offset;
@@ -79,26 +81,29 @@ size_t mread(struct Buffer *src,
 
   if(!src->io_count) {
     length = fread(buffer, sizeof(*buffer), bufsize, in);
+    retval = length;
     offset = 0;
-  }
-  else if(bytes >= bufsize - offset) {
+  } else if(bytes >= bufsize - offset) {
     memmove(buffer, buffer + offset, bufsize - offset);
     offset = bufsize - offset;
     length = fread(buffer + offset, sizeof(*buffer), bufsize - offset, in);
+    retval = length;
     offset = 0;
   }
 
   if(bytes == 1) {
     *(char *)dst = buffer[offset];
+    retval++;
   } else {
     memcpy(dst, buffer + offset, bytes);
+    retval += bytes;
   }
 
   src->length = length;
   src->io_count += bytes;
   src->offset = offset + bytes;
 
-  return bytes;
+  return retval;
 }
 
 size_t mwrite(struct Buffer *dst,
@@ -125,7 +130,7 @@ size_t mwrite(struct Buffer *dst,
   }
 
   retval  = 0;
-  bufsize  = dst->bufsize;
+  bufsize = dst->bufsize;
   offset  = dst->offset;
   buffer  = dst->buffer;
   bytes   = size * nmemb;
@@ -138,11 +143,11 @@ size_t mwrite(struct Buffer *dst,
     offset = 0;
   } else if(bytes > 1) {
     memcpy(buffer + offset, src, bytes);
-    retval = bytes;
+    retval += bytes;
     offset += bytes;
   } else if(bytes < 2) {
     buffer[offset] = *(char *)src;
-    retval = 1;
+    retval++;
     offset++;
   }
 
