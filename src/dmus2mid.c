@@ -188,8 +188,8 @@ int mus2mid_convert(FILE *mid,
   mwrite(write_buffer, MIDI_TEMPO_MAGIC, 1, MIDI_TEMPO_LENGTH, mid);
 
   for(midi_channel = 0; midi_channel < MIDI_MAX_CHANS; midi_channel++) {
-    mwrite_byte(write_buffer, 0xB0 | midi_channel, mid);
-    mwrite_byte(write_buffer, 0x07, mid);
+    mwrite_byte(write_buffer, MIDI_CTRL_EVENT | midi_channel, mid);
+    mwrite_byte(write_buffer, MIDC_VOLUME, mid);
     mwrite_byte(write_buffer, 0x7F, mid);
     mwrite_byte(write_buffer, 0x00, mid);
   }
