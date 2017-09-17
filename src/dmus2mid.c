@@ -245,7 +245,7 @@ int mus2mid_convert(FILE *mid,
 
       default:
         fprintf(stderr, "Unknown event %x\n", event);
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 
     channel->event = MUS2MID_EVENT_TABLE[event];
