@@ -26,7 +26,7 @@
 #define MIDI_MTRK_FILESZ  "\x00\x00\x00\x00"
 #define MIDI_KEYSIG_MAGIC "\x00\xFF\x59\x02\x00\x00"
 #define MIDI_TEMPO_MAGIC  "\x00\xFF\x51\x03"
-#define MIDI_END_OF_TRACK "\xFF\x2F"
+#define MIDI_END_OF_TRACK "\xFF\x2F\x00"
 
 #define MIDI_HEADER_LENGTH  (sizeof(MIDI_HEADER_MAGIC) - 1)
 #define MIDI_HDATA_LENGTH   (sizeof(MIDI_HEADER_DATA) - 1)
