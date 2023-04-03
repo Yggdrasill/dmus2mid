@@ -29,14 +29,33 @@ unsigned char mid_channel_fix(unsigned char byte)
   return byte == 0x0F ? 0x09 : byte == 0x09 ? 0x0F : byte;
 }
 
-size_t mid_metadata_write(FILE *mid, uint16_t tpqn)
+size_t mid_tempo_write(FILE *mid, uint8_t factor)
+{
+  size_t retval;
+  uint32_t tempo;
+
+  /*
+   * We shift the tempo up a byte, because the tempo is a 24-byte value. This
+   * conveniently also leaves us with a zero byte following our tempo change
+   * meta-event, so the next MIDI event is not broken.
+   */
+  tempo = (MIDI_TEMPO_DEFAULT * factor) << 8;
+  tempo = htonl(tempo);
+  retval = fwrite(MIDI_TEMPO_MAGIC, 1, MIDI_TEMPO_LENGTH, mid);
+  retval += fwrite(&tempo, sizeof(tempo), 1, mid);
+
+  return retval;
+}
+
+
+size_t mid_metadata_write(FILE *mid, uint16_t tpqn, uint8_t factor)
 {
   size_t retval;
 
   retval = fwrite(MIDI_HEADER_MAGIC, 1, MIDI_HEADER_LENGTH, mid);
   retval += fwrite(MIDI_HEADER_DATA, 1, MIDI_HDATA_LENGTH, mid);
 
-  tpqn = htons(tpqn);
+  tpqn = htons(tpqn * factor);
   retval += fwrite(&tpqn, sizeof(tpqn), 1, mid);
 
   retval += fwrite(MIDI_MTRK_MAGIC, 1, MIDI_MTRK_LENGTH, mid);

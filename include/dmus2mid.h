@@ -31,6 +31,7 @@
                       "-t\tSpecify ticks per quarter note. Examples:\n" \
                       "  \t70  - Only Raptor uses this for the DMX MUS format\n" \
                       "  \t140 - DOOM, Strife, Hexen etc. have 140 TPQN\n" \
+                      "-f\tSpecify a factor to TPQN and tempo. May increase quality\n" \
                       "-z\tEnable zero-velocity NOTE_ON events, may help compression\n" \
                       "-e\tDisable zero-velocity NOTE_ON events, disabled by default\n" \
                       "-r\tEnable running mode for compression, enabled by default\n" \
@@ -46,12 +47,13 @@ unsigned char mid_channel_fix(unsigned char);
 
 enum ARGS {
   ARGS_TPQN         = 0x01,
-  ARGS_USEZEROVEL   = 0x02,
-  ARGS_USERUNNING   = 0x04,
-  ARGS_NOZEROVEL    = 0x08,
-  ARGS_NORUNNING    = 0x10,
-  ARGS_QUIET        = 0x20,
-  ARGS_VERBOSE      = 0x40
+  ARGS_FACTOR       = 0x02,
+  ARGS_USEZEROVEL   = 0x04,
+  ARGS_USERUNNING   = 0x08,
+  ARGS_NOZEROVEL    = 0x10,
+  ARGS_NORUNNING    = 0x20,
+  ARGS_QUIET        = 0x40,
+  ARGS_VERBOSE      = 0x80
 };
 
 #define DEFAULT_ARGS (ARGS_USERUNNING | ARGS_NOZEROVEL)

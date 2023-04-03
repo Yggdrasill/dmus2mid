@@ -97,18 +97,21 @@ int args_parse(int argc,
               char **argv,
               char **fname_mus,
               char **fname_mid,
-              uint16_t *tpqn)
+              uint16_t *tpqn,
+              uint8_t *factor)
 {
-  int arg;
-  int mask;
-  int stpqn;
+  uint32_t mask;
+  uint16_t stpqn;
+  uint8_t sfactor;
+  char arg;
 
   mask = 0;
   stpqn = MUS2MID_TPQN_DEFAULT;
+  sfactor = MIDI_FACTOR_DEFAULT;
 
   mask = DEFAULT_ARGS;
 
-  while( (arg = getopt(argc, argv, "hzreuqvt:") ) != -1) {
+  while( (arg = getopt(argc, argv, "hzreuqvtf:") ) != -1) {
     switch(arg) {
       case 'h':
         print_help(argv[0]);
@@ -144,10 +147,14 @@ int args_parse(int argc,
           fputs("Ridiculous TPQN, ignoring\n", stderr);
         }
         break;
+      case 'f':
+        sfactor = strtol(optarg, NULL, 0);
+        break;
     }
   }
 
   *tpqn = stpqn;
+  *factor = sfactor;
 
   *fname_mus = argv[optind];
   *fname_mid = argv[optind + 1];
@@ -184,8 +191,6 @@ int mus2mid_convert(FILE *mid,
   byte = 0;
   delay = 0;
   prev_chan = 0xFF;
-
-  mwrite(write_buffer, MIDI_TEMPO_MAGIC, 1, MIDI_TEMPO_LENGTH, mid);
 
   for(midi_channel = 0; midi_channel < MIDI_MAX_CHANS; midi_channel++) {
     mwrite_byte(write_buffer, MIDI_CTRL_EVENT | midi_channel, mid);
@@ -311,11 +316,12 @@ int main(int argc, char **argv)
 
   uint16_t tpqn;
   uint16_t mus_channels;
+  uint8_t factor;
 
   char *fname_mus;
   char *fname_mid;
 
-  if(argc < 2) {
+  if(argc <= 2) {
     print_help(argv[0]);
     exit(EXIT_SUCCESS);
   }
@@ -325,7 +331,7 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  arg_mask = args_parse(argc, argv, &fname_mus, &fname_mid, &tpqn);
+  arg_mask = args_parse(argc, argv, &fname_mus, &fname_mid, &tpqn, &factor);
 
   if(!fname_mus) {
     fputs("MUS filename invalid\n", stderr);
@@ -361,8 +367,9 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  mid_metadata_write(mid, tpqn);
+  mid_metadata_write(mid, tpqn, factor);
   mtrk_len_offset = ftell(mid) - MIDI_MTRK_FSZLEN;
+  mid_tempo_write(mid, factor);
 
   mus_validate(mus, &read_buffer);
   mus_metadata_read(mus, &read_buffer, &mus_channels);
