@@ -42,7 +42,8 @@ size_t mid_tempo_write(FILE *mid, uint8_t factor)
   tempo = (MIDI_TEMPO_DEFAULT * factor) << 8;
   tempo = htonl(tempo);
   retval = fwrite(MIDI_TEMPO_MAGIC, 1, MIDI_TEMPO_LENGTH, mid);
-  retval += fwrite(&tempo, sizeof(tempo), 1, mid);
+  /* Reverse size and nmemb so we get bytes written instead of elements. */
+  retval += fwrite(&tempo, 1, sizeof(tempo), mid);
 
   return retval;
 }
