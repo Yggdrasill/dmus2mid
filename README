@@ -31,6 +31,7 @@ dmus2mid [options] [file.mus] [file.mid]
 -t      Specify ticks per quarter note. Examples:
         70  - Only Raptor uses this for the DMX MUS format
         140 - DOOM, Strife, Hexen etc. have 140 TPQN
+-f      Specify a factor to TPQN and tempo. May increase quality
 -z      Enable zero-velocity NOTE_ON events, may help compression
 -e      Disable zero-velocity NOTE_ON events, disabled by default
 -r      Enable running mode for compression, enabled by default
