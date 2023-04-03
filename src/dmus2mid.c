@@ -311,6 +311,7 @@ int main(int argc, char **argv)
   long mtrk_len_offset;
 
   uint32_t mtrk_size;
+  size_t bytes;
 
   int arg_mask;
 
@@ -369,7 +370,7 @@ int main(int argc, char **argv)
 
   mid_metadata_write(mid, tpqn, factor);
   mtrk_len_offset = ftell(mid) - MIDI_MTRK_FSZLEN;
-  mid_tempo_write(mid, factor);
+  bytes = mid_tempo_write(mid, factor);
 
   mus_validate(mus, &read_buffer);
   mus_metadata_read(mus, &read_buffer, &mus_channels);
@@ -381,7 +382,8 @@ int main(int argc, char **argv)
   mflush(&write_buffer, mid);
 
   fseek(mid, mtrk_len_offset, SEEK_SET);
-  mtrk_size = htonl( (uint32_t)write_buffer.io_count);
+  /* add on our bytes written for the tempo meta-event */
+  mtrk_size = htonl( (uint32_t)write_buffer.io_count + (uint32_t)bytes);
   fwrite(&mtrk_size, sizeof(mtrk_size), 1, mid);
 
   buffer_free(&read_buffer);
